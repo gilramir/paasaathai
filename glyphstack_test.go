@@ -10,7 +10,7 @@ const (
 )
 
 // Find 3 individual Thai characters
-func (s *MySuite) TestGlyphStack1(c *C) {
+func (s *MySuite) TestGlyphStack01(c *C) {
 
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_CHO_CHAN
 	// [used with another verb to indicate possibility] may; might
@@ -26,7 +26,7 @@ func (s *MySuite) TestGlyphStack1(c *C) {
 }
 
 // Find a mix of Latin and Thai characters
-func (s *MySuite) TestGlyphStack2(c *C) {
+func (s *MySuite) TestGlyphStack02(c *C) {
 
 	// a, THAI_CHARACTER_O_ANG, b, THAI_CHARACTER_SARA_AA, c, THAI_CHARACTER_CHO_CHAN
 	input := "aอbาcจ"
@@ -46,7 +46,7 @@ func (s *MySuite) TestGlyphStack2(c *C) {
 // Handle a mistake in Thai orthography, but allowed in Unicode.
 // It's a vowel above the front vowel which is wrong. It may not
 // display correctly in your editor.
-func (s *MySuite) TestGlyphStack3(c *C) {
+func (s *MySuite) TestGlyphStack03(c *C) {
 	input := ThaiError1
 	c.Assert(len([]rune(input)), Equals, 5)
 
@@ -62,7 +62,7 @@ func (s *MySuite) TestGlyphStack3(c *C) {
 }
 
 // Handle a 2-codepoint stack
-func (s *MySuite) TestGlyphStack5(c *C) {
+func (s *MySuite) TestGlyphStack04(c *C) {
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_MAI_THO, THAI_CHARACTER_SARA_AA,
 	// THAI_CHARACTER_NGO_NGU
 	// "to claim; claim that"
@@ -82,7 +82,7 @@ func (s *MySuite) TestGlyphStack5(c *C) {
 }
 
 // Handle a 3-codepoint stack
-func (s *MySuite) TestGlyphStack6(c *C) {
+func (s *MySuite) TestGlyphStack05(c *C) {
 	// This may not display properly in your editor
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_YO_YAK, THAI_CHARACTER_SARA_UU,
 	// THAI_CHARACTER_MAI_EK
@@ -99,7 +99,7 @@ func (s *MySuite) TestGlyphStack6(c *C) {
 }
 
 // Handle a SARA_AM
-func (s *MySuite) TestGlyphStack7(c *C) {
+func (s *MySuite) TestGlyphStack06(c *C) {
 	// This may not display properly in your editor
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_BO_BAIMAI,
 	// THAI_CHARACTER_NO_NU, THAI_CHARACTER_MAI_THO, THAI_CHARACTER_SARA_AM
@@ -117,4 +117,16 @@ func (s *MySuite) TestGlyphStack7(c *C) {
 	c.Check(len(gstacks[2].Runes), Equals, 1)
 	c.Check(len(gstacks[3].Runes), Equals, 2)
 	c.Check(len(gstacks[4].Runes), Equals, 1)
+}
+
+// Handle THAI_CHARACTER_MAITAIKHU
+func (s *MySuite) TestGlyphStack07(c *C) {
+	// THAI_CHARACTER_KO_KAI, THAI_CHARACTER_MAITAIKHU
+	input := "ก็"
+	c.Assert(len([]rune(input)), Equals, 2)
+
+	gstacks := ParseGlyphStacks(input)
+	c.Assert(len(gstacks), Equals, 1)
+
+	c.Check(len(gstacks[0].Runes), Equals, 2)
 }

@@ -26,10 +26,16 @@ def main():
 
     args = parser.parse_args()
 
+    wfh = sys.stdout
     if args.output_file:
         wfh = open(args.output_file, "wt")
-    else:
-        wfh = sys.stdout
+
+    print("""package paasaathai
+
+// From Unicode Thai code points
+// https://www.unicode.org/charts/PDF/U0E00.pdf
+const (
+""", file=wfh)
 
     codepoints = []
 
@@ -49,11 +55,33 @@ def main():
             elif "THAI" in line:
                 print("no match:", line)
 
+    print("""
+)
+
+var RuneToThaiName = map[rune]string{
+""", file=wfh)
+
     # The string map
     # 0x0E01:/* ก */ "THAI_CHARACTER_KO_KAI",
     for cp in codepoints:
         print(f"\t0x{cp.hex}:/* {cp.thai} */ \"{cp.description}\",",
             file=wfh)
+
+    print("""
+}
+
+var ThaiNameToRune = map[string]rune{
+""", file=wfh)
+
+    # The string map
+    # /* ก */ "THAI_CHARACTER_KO_KAI" : 0x0E01,
+    for cp in codepoints:
+        print(f"\t/* {cp.thai} */ \"{cp.description}\" : 0x{cp.hex},",
+            file=wfh)
+
+    print("""
+    }
+    """, file=wfh)
 
 if __name__ == "__main__":
     main()

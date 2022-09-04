@@ -3,23 +3,17 @@ package paasaathai
 import (
 	"fmt"
 	"sync"
+	"unicode/utf8"
 
 	"golang.org/x/text/unicode/norm"
 )
 
 // Represents one vertical stack of characters that fit into one horizontal
 // character box, according to Unicode glyphs. It is generic for Unicode, not
-// Thai-specific.
+// Thai-specific. But, there are Thai-specific methods for investigating it.
 type GlyphStack struct {
 	Runes []rune
 }
-
-// Implements the io.Reader interface
-/*
-func (s *GlyphStack) Read(p []byte) (n int, err error) {
-
-}
-*/
 
 // Implements the fmt.Stringer interface
 func (s *GlyphStack) String() string {
@@ -30,18 +24,30 @@ func (s *GlyphStack) Repr() string {
 	return fmt.Sprintf("<GlyphStack %s>", StringToRuneNames(string(s.Runes)))
 }
 
+func (s GlyphStack) StartsWithConsonant() bool {
+	return RuneIsConsonant(s.Runes[0])
+}
+
+func (s GlyphStack) HasUpperPositionVowel() bool {
+	for _, r := range s.Runes {
+		if RuneIsUpperPositionVowel(r) {
+			return true
+		}
+	}
+	return false
+}
+
 type GlyphStackParser struct {
-	GlyphChan chan *GlyphStack
-	Wg        sync.WaitGroup
+	Chan chan *GlyphStack
+	Wg   sync.WaitGroup
 }
 
 func ParseGlyphStacks(input string) []*GlyphStack {
 	var parser GlyphStackParser
 	parser.GoParse(input)
 
-	//gstacks := make([]*GlyphStack, 0, len(input))
-	gstacks := make([]*GlyphStack, 0)
-	for g := range parser.GlyphChan {
+	gstacks := make([]*GlyphStack, 0, len(input))
+	for g := range parser.Chan {
 		gstacks = append(gstacks, g)
 	}
 
@@ -50,7 +56,7 @@ func ParseGlyphStacks(input string) []*GlyphStack {
 }
 
 func (s *GlyphStackParser) GoParse(input string) {
-	s.GlyphChan = make(chan *GlyphStack)
+	s.Chan = make(chan *GlyphStack)
 
 	normalizedInput := norm.NFD.String(input)
 	s.Wg.Add(1)
@@ -58,75 +64,28 @@ func (s *GlyphStackParser) GoParse(input string) {
 }
 
 func (s *GlyphStackParser) parse(input string) {
-	defer close(s.GlyphChan)
+	defer close(s.Chan)
 	defer s.Wg.Done()
 
+	// Check the string (array of bytes for the UTF-8 encoding)
 	for i := 0; i < len(input); {
+		//fmt.Printf("Checking at %d\n", i)
 		d := norm.NFC.NextBoundaryInString(input[i:], true)
-		s.GlyphChan <- &GlyphStack{
+
+		// The Unicode library doesn't handle THAI_CHARACTER_MAITAIKHU
+		// correctly. It shouldn't be across the boundary
+		r1, r1sz := utf8.DecodeRuneInString(input[i:])
+		// Need 3 bytes to encode a Thai glyph in UTF-8; do we have
+		// enough for another codepoint?
+		if RuneIsConsonant(r1) && len(input)-(i+r1sz) >= 3 {
+			r2, r2sz := utf8.DecodeRuneInString(input[i+r1sz:])
+			if r2 == THAI_CHARACTER_MAITAIKHU {
+				d += r2sz
+			}
+		}
+		s.Chan <- &GlyphStack{
 			Runes: []rune(input[i : i+d]),
 		}
 		i += d
 	}
 }
-
-/*
-// Feed runes into a goroutine that is accumulating runes
-// to build up GlyphStacks. That in turn feeds into
-// another goroutine to accumulate the GlyphStacks
-func ParseGlyphStacks(input string) []*GlyphStack {
-
-	var parser glyphStackParser
-
-	parser.Init()
-
-	gstacks := make([]*GlyphStack, 0)
-
-	var gstack *GlyphStack
-
-	runes := []rune(input)
-
-	start := -1
-	var i int
-	for i = 0; i < len(runes); i++ {
-	retryRune:
-		r := runes[i]
-		//fmt.Printf("[%d] (%d) is Thai: %v\n", i, r, RuneIsThai(r))
-		if gstack == nil {
-			start = i
-			gstack = &GlyphStack{
-				IsThai: RuneIsThai(r),
-			}
-			continue
-		} else if gstack.IsThai {
-			// for now
-			if RuneIsThai(r) {
-				continue
-			} else {
-				gstack.Text = string(runes[start:i])
-				gstacks = append(gstacks, gstack)
-				gstack = nil
-				goto retryRune
-			}
-		} else {
-			// gstack is not Thai
-
-			if RuneIsThai(r) {
-				gstack.Text = string(runes[start:i])
-				gstacks = append(gstacks, gstack)
-				gstack = nil
-				goto retryRune
-			} else {
-				// rune is not thai
-				continue
-			}
-		}
-	}
-	if gstack != nil {
-		gstack.Text = string(runes[start:i])
-		gstacks = append(gstacks, gstack)
-		gstack = nil
-	}
-	return gstacks
-}
-*/
