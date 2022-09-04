@@ -1,31 +1,17 @@
 package paasaathai
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
 
+	"golang.org/x/text/unicode/norm"
+)
+
+// Represents one vertical stack of characters that fit into one horizontal
+// character box, according to Unicode glyphs. It is generic for Unicode, not
+// Thai-specific.
 type GlyphStack struct {
-	Text string
-
-	// IsThai is true, IsValid is true:  all the Thai fields are filled in, as well as Text,
-	// IsThai is true, IsValid is false: Text is filled in with 1 or more
-	// Thai characters
-	// IsThai is false, IsValid is always false, and Text is filld in with
-	// no Thai characters:
-	IsThai bool
-
-	// Is this a valid GlyphStack, or just one that carries
-	// an invalid Text
-	IsValid bool
-
-	// Tone
-	Upper2Level rune
-
-	// Vowel, Tone, or Karan
-	Upper1Level rune
-
-	// Vowel, consonant, or special
-	MiddleLevel rune
-
-	LowerVowel rune
+	Runes []rune
 }
 
 // Implements the io.Reader interface
@@ -37,18 +23,62 @@ func (s *GlyphStack) Read(p []byte) (n int, err error) {
 
 // Implements the fmt.Stringer interface
 func (s *GlyphStack) String() string {
-	return s.Text
+	return string(s.Runes)
 }
 
 func (s *GlyphStack) Repr() string {
-	if s.IsThai {
-		return fmt.Sprintf("(%s)", s.Text)
-	} else {
-		return fmt.Sprintf("(%+v)", s)
-	}
+	return fmt.Sprintf("<GlyphStack %s>", string(s.Runes))
+}
+
+type GlyphStackParser struct {
+	GlyphChan chan *GlyphStack
+	Wg        sync.WaitGroup
 }
 
 func ParseGlyphStacks(input string) []*GlyphStack {
+	var parser GlyphStackParser
+	parser.GoParse(input)
+
+	//gstacks := make([]*GlyphStack, 0, len(input))
+	gstacks := make([]*GlyphStack, 0)
+	for g := range parser.GlyphChan {
+		gstacks = append(gstacks, g)
+	}
+
+	parser.Wg.Wait()
+	return gstacks
+}
+
+func (s *GlyphStackParser) GoParse(input string) {
+	s.GlyphChan = make(chan *GlyphStack)
+
+	normalizedInput := norm.NFD.String(input)
+	s.Wg.Add(1)
+	go s.parse(normalizedInput)
+}
+
+func (s *GlyphStackParser) parse(input string) {
+	defer close(s.GlyphChan)
+	defer s.Wg.Done()
+
+	for i := 0; i < len(input); {
+		d := norm.NFC.NextBoundaryInString(input[i:], true)
+		s.GlyphChan <- &GlyphStack{
+			Runes: []rune(input[i : i+d]),
+		}
+		i += d
+	}
+}
+
+/*
+// Feed runes into a goroutine that is accumulating runes
+// to build up GlyphStacks. That in turn feeds into
+// another goroutine to accumulate the GlyphStacks
+func ParseGlyphStacks(input string) []*GlyphStack {
+
+	var parser glyphStackParser
+
+	parser.Init()
 
 	gstacks := make([]*GlyphStack, 0)
 
@@ -61,6 +91,7 @@ func ParseGlyphStacks(input string) []*GlyphStack {
 	for i = 0; i < len(runes); i++ {
 	retryRune:
 		r := runes[i]
+		//fmt.Printf("[%d] (%d) is Thai: %v\n", i, r, RuneIsThai(r))
 		if gstack == nil {
 			start = i
 			gstack = &GlyphStack{
@@ -98,3 +129,4 @@ func ParseGlyphStacks(input string) []*GlyphStack {
 	}
 	return gstacks
 }
+*/

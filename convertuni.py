@@ -5,6 +5,7 @@
 # to Golang constants
 
 from argparse import ArgumentParser
+from collections import namedtuple
 import re
 import sys
 
@@ -12,6 +13,8 @@ import sys
 # 0E07 ง THAI CHARACTER NGO NGU
 re_def = re.compile(r"^\s*(?P<hex>0E[0-9A-F]{2}) (?P<thai>\S+) (?P<desc>THAI"
     " (CHARACTER|DIGIT|CURRENCY) .*)$")
+
+TCP = namedtuple("TCP", ("hex", "thai", "description"))
 
 # output:
 #	/* ฆ */ KHO_RAKHANG = 0x0E06
@@ -23,21 +26,34 @@ def main():
 
     args = parser.parse_args()
 
+    if args.output_file:
+        wfh = open(args.output_file, "wt")
+    else:
+        wfh = sys.stdout
+
+    codepoints = []
+
+    # The const section
+    # /* ก */ THAI_CHARACTER_KO_KAI = rune(0x0E01)
     with open(args.input_file, "rt", encoding="utf-8") as rfh:
-        if args.output_file:
-            wfh = open(args.output_file, "wt")
-        else:
-            wfh = sys.stdout
         for line in rfh.readlines():
             m = re_def.match(line)
             if m:
                 h = m.group("hex")
                 t = m.group("thai")
                 d = m.group("desc").replace(" ", "_").replace("-", "_")
-                print(f"\t/* {t} */ {d} = 0x{h}", file=wfh)
+                d = d.rstrip("\n")
+                print(f"\t/* {t} */ {d} = rune(0x{h})", file=wfh)
+                cp = TCP(h, t, d)
+                codepoints.append(cp)
             elif "THAI" in line:
                 print("no match:", line)
 
+    # The string map
+    # 0x0E01:/* ก */ "THAI_CHARACTER_KO_KAI",
+    for cp in codepoints:
+        print(f"\t0x{cp.hex}:/* {cp.thai} */ \"{cp.description}\",",
+            file=wfh)
 
 if __name__ == "__main__":
     main()
