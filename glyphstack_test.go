@@ -13,6 +13,7 @@ const (
 func (s *MySuite) TestGlyphStack1(c *C) {
 
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_CHO_CHAN
+	// [used with another verb to indicate possibility] may; might
 	input := "อาจ"
 	c.Assert(len([]rune(input)), Equals, 3)
 
@@ -64,6 +65,7 @@ func (s *MySuite) TestGlyphStack3(c *C) {
 func (s *MySuite) TestGlyphStack5(c *C) {
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_MAI_THO, THAI_CHARACTER_SARA_AA,
 	// THAI_CHARACTER_NGO_NGU
+	// "to claim; claim that"
 	input := "อ้าง"
 
 	c.Assert(len([]rune(input)), Equals, 4)
@@ -77,4 +79,42 @@ func (s *MySuite) TestGlyphStack5(c *C) {
 
 	c.Check(gstacks[0].Runes[0], Equals, THAI_CHARACTER_O_ANG)
 	c.Check(gstacks[0].Runes[1], Equals, THAI_CHARACTER_MAI_THO)
+}
+
+// Handle a 3-codepoint stack
+func (s *MySuite) TestGlyphStack6(c *C) {
+	// This may not display properly in your editor
+	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_YO_YAK, THAI_CHARACTER_SARA_UU,
+	// THAI_CHARACTER_MAI_EK
+	// "is (located at); to reside; to live (at); stay; exist at a
+	// particular point in time"
+	input := "อยู่"
+	c.Assert(len([]rune(input)), Equals, 4)
+
+	gstacks := ParseGlyphStacks(input)
+	c.Assert(len(gstacks), Equals, 2)
+
+	c.Check(len(gstacks[0].Runes), Equals, 1)
+	c.Check(len(gstacks[1].Runes), Equals, 3)
+}
+
+// Handle a SARA_AM
+func (s *MySuite) TestGlyphStack7(c *C) {
+	// This may not display properly in your editor
+	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_BO_BAIMAI,
+	// THAI_CHARACTER_NO_NU, THAI_CHARACTER_MAI_THO, THAI_CHARACTER_SARA_AM
+
+	// to bathe; take a bath; take a shower; swim
+	input := "อาบน้ำ"
+
+	c.Assert(len([]rune(input)), Equals, 6)
+
+	gstacks := ParseGlyphStacks(input)
+	c.Assert(len(gstacks), Equals, 5)
+
+	c.Check(len(gstacks[0].Runes), Equals, 1)
+	c.Check(len(gstacks[1].Runes), Equals, 1)
+	c.Check(len(gstacks[2].Runes), Equals, 1)
+	c.Check(len(gstacks[3].Runes), Equals, 2)
+	c.Check(len(gstacks[4].Runes), Equals, 1)
 }

@@ -27,7 +27,7 @@ func (s *GlyphStack) String() string {
 }
 
 func (s *GlyphStack) Repr() string {
-	return fmt.Sprintf("<GlyphStack %s>", string(s.Runes))
+	return fmt.Sprintf("<GlyphStack %s>", StringToRuneNames(string(s.Runes)))
 }
 
 type GlyphStackParser struct {
