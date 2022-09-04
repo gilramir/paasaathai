@@ -262,7 +262,7 @@ func RuneIsMidPositionVowel(r rune) bool {
 		r == THAI_CHARACTER_LAKKHANGYAO
 }
 
-// We consdier THAI_CHARACTER_PHINTHU to be a lower position vowel
+// We consider THAI_CHARACTER_PHINTHU to be a lower position vowel
 func RuneIsLowerPositionVowel(r rune) bool {
 	return r == THAI_CHARACTER_SARA_U ||
 		r == THAI_CHARACTER_SARA_UU ||
