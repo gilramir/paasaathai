@@ -21,12 +21,18 @@ func (s *GlyphStack) String() string {
 }
 
 func (s *GlyphStack) Repr() string {
-	return fmt.Sprintf("<GlyphStack %s>", StringToRuneNames(string(s.Runes)))
+	return fmt.Sprintf("<GlyphStack %s %s>", string(s.Runes), StringToRuneNames(string(s.Runes)))
 }
 
+func (s GlyphStack) IsThai() bool {
+	return RuneIsThai(s.Runes[0])
+}
+
+/*
 func (s GlyphStack) StartsWithConsonant() bool {
 	return RuneIsConsonant(s.Runes[0])
 }
+*/
 
 func (s GlyphStack) HasUpperPositionVowel() bool {
 	for _, r := range s.Runes {
@@ -69,20 +75,30 @@ func (s *GlyphStackParser) parse(input string) {
 
 	// Check the string (array of bytes for the UTF-8 encoding)
 	for i := 0; i < len(input); {
-		//fmt.Printf("Checking at %d\n", i)
-		d := norm.NFC.NextBoundaryInString(input[i:], true)
-
-		// The Unicode library doesn't handle THAI_CHARACTER_MAITAIKHU
-		// correctly. It shouldn't be across the boundary
+		// The Unicode library notation of "boundaries" doesn't handle Thai
+		// the way we need it to. Implement it ourselves.
 		r1, r1sz := utf8.DecodeRuneInString(input[i:])
+
+		// How many bytes have we decoded
+		d := r1sz
+
 		// Need 3 bytes to encode a Thai glyph in UTF-8; do we have
 		// enough for another codepoint?
-		if RuneIsConsonant(r1) && len(input)-(i+r1sz) >= 3 {
-			r2, r2sz := utf8.DecodeRuneInString(input[i+r1sz:])
-			if r2 == THAI_CHARACTER_MAITAIKHU {
+		if RuneIsConsonant(r1) && len(input)-(i+d) >= 3 {
+			r2, r2sz := utf8.DecodeRuneInString(input[i+d:])
+			if RuneIsUpperPosition(r2) || RuneIsLowerPositionVowel(r2) {
 				d += r2sz
 			}
+
+			// An upper or lower vowel can still take a tone mark
+			if (RuneIsLowerPositionVowel(r2) || RuneIsUpperPositionVowel(r2)) && len(input)-(i+d) >= 3 {
+				r3, r3sz := utf8.DecodeRuneInString(input[i+d:])
+				if RuneIsToneMark(r3) {
+					d += r3sz
+				}
+			}
 		}
+
 		s.Chan <- &GlyphStack{
 			Runes: []rune(input[i : i+d]),
 		}

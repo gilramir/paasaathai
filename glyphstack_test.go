@@ -119,10 +119,22 @@ func (s *MySuite) TestGlyphStack06(c *C) {
 	c.Check(len(gstacks[4].Runes), Equals, 1)
 }
 
-// Handle THAI_CHARACTER_MAITAIKHU
+// Handle "ก็"
 func (s *MySuite) TestGlyphStack07(c *C) {
 	// THAI_CHARACTER_KO_KAI, THAI_CHARACTER_MAITAIKHU
 	input := "ก็"
+	c.Assert(len([]rune(input)), Equals, 2)
+
+	gstacks := ParseGlyphStacks(input)
+	c.Assert(len(gstacks), Equals, 1)
+
+	c.Check(len(gstacks[0].Runes), Equals, 2)
+}
+
+// Handle "อึ"
+func (s *MySuite) TestGlyphStack08(c *C) {
+	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_UE
+	input := "อึ"
 	c.Assert(len([]rune(input)), Equals, 2)
 
 	gstacks := ParseGlyphStacks(input)

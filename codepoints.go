@@ -59,6 +59,10 @@ func RuneIsVowel(r rune) bool {
 		RuneIsLowerPositionVowel(r)
 }
 
+func RuneIsUpperPosition(r rune) bool {
+	return RuneIsUpperPositionVowel(r) || RuneIsToneMark(r) || RuneIsUpperPositionSign(r)
+}
+
 // We don't consider THAI_CHARACTER_SARA_AM to be upper; we call it mid
 // We do consider THAI_CHARACTER_MAITAIKHU to be an upper vowel
 func RuneIsUpperPositionVowel(r rune) bool {

@@ -34,8 +34,7 @@ def main():
 
 // From Unicode Thai code points
 // https://www.unicode.org/charts/PDF/U0E00.pdf
-const (
-""", file=wfh)
+const (""", file=wfh)
 
     codepoints = []
 
@@ -55,11 +54,9 @@ const (
             elif "THAI" in line:
                 print("no match:", line)
 
-    print("""
-)
+    print(""")
 
-var RuneToThaiName = map[rune]string{
-""", file=wfh)
+var RuneToThaiName = map[rune]string{""", file=wfh)
 
     # The string map
     # 0x0E01:/* ก */ "THAI_CHARACTER_KO_KAI",
@@ -67,21 +64,17 @@ var RuneToThaiName = map[rune]string{
         print(f"\t0x{cp.hex}:/* {cp.thai} */ \"{cp.description}\",",
             file=wfh)
 
-    print("""
-}
+    print("""}
 
-var ThaiNameToRune = map[string]rune{
-""", file=wfh)
+var ThaiNameToRune = map[string]rune{""", file=wfh)
 
     # The string map
     # /* ก */ "THAI_CHARACTER_KO_KAI" : 0x0E01,
     for cp in codepoints:
-        print(f"\t/* {cp.thai} */ \"{cp.description}\" : 0x{cp.hex},",
+        print(f"\t/* {cp.thai} */ \"{cp.description}\": 0x{cp.hex},",
             file=wfh)
 
-    print("""
-    }
-    """, file=wfh)
+    print("}", file=wfh)
 
 if __name__ == "__main__":
     main()
