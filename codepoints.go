@@ -43,6 +43,20 @@ func StringToRuneNames(text string) string {
 	return strings.Join(names, ", ")
 }
 
+// Return a string, converting Thai rune names to actual runes.
+// Any other name results in an error
+func RuneNamesToString(names []string) (string, error) {
+	answer := ""
+	for i, name := range names {
+		if r, has := ThaiNameToRune[name]; has {
+			answer += string(r)
+		} else {
+			return "", fmt.Errorf("'%s' at index %d is not a Thai codepoint name", name, i)
+		}
+	}
+	return answer, nil
+}
+
 // THAI_CHARACTER_O_ANG is considered a consonant here (in Thai it also acts
 // like a vowel)
 // THAI_CHARACTER_RU and THAI_CHARACTER_LU are also considered consonants

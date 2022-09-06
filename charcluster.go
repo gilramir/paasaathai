@@ -7,7 +7,6 @@ package paasaathai
 
 import (
 	"fmt"
-	"sync"
 )
 
 var ConsonantsAllowedAtFront = []rune{
@@ -72,6 +71,47 @@ func (s *CharacterCluster) Repr() string {
 	}
 }
 
+/*
+// A consonant that can appear in the first position
+var FirstConsonant = &ObjParserClass[*GlyphStack]{
+	"FirstConsonant",
+	func(g *GlyphStack) bool {
+		gr := g.Runes[0]
+		if !RuneIsConsonant(gr) {
+			return false
+		}
+		// TODO - make this a set
+		for _, r := range ConsonantsAllowedAtFront {
+			if gr == r {
+				return true
+			}
+		}
+		return false
+	},
+}
+
+var RuleCRRC = &ObjParserPattern[*CC]{
+    "CRRC",
+    "FirstConsonant RoRua{2} FinalConsonant"
+}
+
+var parser = NewObjParser[*GlyphStack]()
+
+func init() {
+	parser.Initialize()
+	parser.Register(FirstConsonant)
+	parser.AddRules(`
+	LEGAL = CC
+
+	CC = FirstConsonant RoRua{2} FinalConsonant
+	{
+		RR(
+`)
+}
+
+*/
+
+/*
 func (s *CharacterCluster) HasFrontVowel() bool {
 	return len(s.FrontVowel.Runes) > 0
 }
@@ -84,7 +124,7 @@ type CharacterClusterParser struct {
 	pos   int
 	cc    *CharacterCluster
 }
-
+*/
 /*
 func ParseCharacterClusters(input string) []*CharacterCluster {
 	glyphStacks := ParseGlyphStacks(input)
