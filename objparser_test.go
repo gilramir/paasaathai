@@ -1,6 +1,8 @@
 package paasaathai
 
 import (
+	"strings"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -23,6 +25,36 @@ var LeafClassVowel = &ObjParserLeafClass[string, *TASTNode]{
 		}
 		return false, nil
 	},
+}
+
+var ioMap = map[string]string{
+	"A": "A",
+	"B": "B",
+	"C": "C",
+}
+
+func ioMapper(name string, inputTarget string) *TASTNode {
+	values := make([]string, 1)
+	values[0] = string(inputTarget)
+	return &TASTNode{
+		values:   values,
+		consumed: 1,
+	}
+}
+
+var ioSeqMap = map[string][]string{
+	"ABC": []string{"A", "B", "C"},
+	"abc": []string{"a", "b", "c"},
+}
+
+func ioSeqMapper(name string, inputTarget []string) *TASTNode {
+	// We combine them into one;
+	values := make([]string, 0)
+	values[0] = strings.Join(inputTarget, "")
+	return &TASTNode{
+		values:   values,
+		consumed: len(inputTarget),
+	}
 }
 
 var RuleTwoVowels = &ObjParserRule[*TASTNode]{
@@ -57,6 +89,8 @@ func (s *MySuite) TestOP01(c *C) {
 	parser.Initialize("TwoVowels")
 	parser.RegisterLeafClass(LeafClassVowel)
 	parser.RegisterRule(RuleTwoVowels)
+	parser.RegisterIOMap(ioMap, ioMapper)
+	parser.RegisterIOSeqMap(ioSeqMap, ioSeqMapper)
 	parser.Finalize()
 
 	input := []string{"A", "A"}

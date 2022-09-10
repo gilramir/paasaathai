@@ -8,6 +8,37 @@ import (
 	// graph "github.com/mcpar-land/generic-graph"
 )
 
+type OPType rune
+
+const (
+	OPRule         = 'R'
+	OPLeafClass    = 'C'
+	OPIOMap        = 'M'
+	OPIOSeq        = 'S'
+	OPPatternToken = 't'
+	OPAnd          = '&'
+	OPOr           = '|'
+)
+
+func OPTypeName(t OPType) string {
+	switch t {
+	case OPRule:
+		return "rule"
+	case OPLeafClass:
+		return "leaf class"
+	case OPIOMap:
+		return "IO Map"
+	case OPIOSeq:
+		return "IO Seq"
+	case OPAnd:
+		return "AND"
+	case OPOr:
+		return "OR"
+	default:
+		return fmt.Sprintf("Error: '%v' is not a valid OPType", t)
+	}
+}
+
 // The output type O must conform to the ObjParserResult interface
 type ObjParserResult interface {
 	SetConsumed(v int)
@@ -15,13 +46,18 @@ type ObjParserResult interface {
 
 // The holder of the definition of the parser
 type ObjParser[I any, O ObjParserResult] struct {
-	targetNames  []string
-	orderedRules []*ObjParserRule[O]
+	finalizedOk bool
+	targetNames []string
+	//orderedRules []*ObjParserRule[O]
+	tree ObjParserTree[O]
+
+	namespace    map[string]OPType
 	ruleMap      map[string]*ObjParserRule[O]
-	classMap     map[string]*ObjParserClass[O]
 	leafClassMap map[string]*ObjParserLeafClass[I, O]
-	allItems     Set[string]
-	finalizedOk  bool
+	ioMap        map[string]I
+	ioMapper     func(string, I) O
+	ioSeqMap     map[string][]I
+	ioSeqMapper  func(string, []I) O
 }
 
 func NewObjParser[I any, O ObjParserResult](targetNames ...string) *ObjParser[I, O] {
@@ -33,10 +69,12 @@ func NewObjParser[I any, O ObjParserResult](targetNames ...string) *ObjParser[I,
 func (s *ObjParser[I, O]) Initialize(targetNames ...string) {
 	s.assertNotFinalized()
 	s.targetNames = targetNames
-	s.orderedRules = make([]*ObjParserRule[O], 0)
+	//	s.orderedRules = make([]*ObjParserRule[O], 0)
 	s.ruleMap = make(map[string]*ObjParserRule[O])
-	s.classMap = make(map[string]*ObjParserClass[O])
 	s.leafClassMap = make(map[string]*ObjParserLeafClass[I, O])
+	s.ioSeqMap = make(map[string][]I)
+	s.ioSeqMap = make(map[string][]I)
+	s.namespace = make(map[string]OPType)
 }
 
 func (s *ObjParser[I, O]) assertFinalized() {
@@ -44,85 +82,26 @@ func (s *ObjParser[I, O]) assertFinalized() {
 		panic("ObjParser.Finalized() has not been called yet")
 	}
 }
+
 func (s *ObjParser[I, O]) assertNotFinalized() {
 	if s.finalizedOk {
 		panic("ObjParser.Finalized() has already been called.")
 	}
 }
 
-func (s *ObjParser[I, O]) Finalize() {
-	s.assertNotFinalized()
-
-	s.allItems = NewSet[string]()
-
-	// Create the set of all rule/class/leafClass names
-	for name, _ := range s.leafClassMap {
-		s.allItems.Add(name)
-	}
-	for name, _ := range s.classMap {
-		s.allItems.Add(name)
-	}
-	for name, _ := range s.ruleMap {
-		s.allItems.Add(name)
-	}
-
-	// Sanity-check the targets
-	for _, name := range s.targetNames {
-		if !s.allItems.Has(name) {
-			panic(fmt.Sprintf("Did not find a leaf/class/rule for target \"%s\"", name))
-		}
-	}
-
-	// Sanity-check that the rules reference things that exists
-	for rname, rule := range s.ruleMap {
-		for _, pname := range rule.getAllPatternTokenNames() {
-			if !s.allItems.Has(pname) {
-				panic(fmt.Sprintf("Rule \"%s\" references item \"%s\" but it is not defined", rname, pname))
-			}
-		}
-	}
-
-	s.finalizedOk = true
-}
-
 func (s *ObjParser[I, O]) RegisterLeafClass(newClass *ObjParserLeafClass[I, O]) {
 	s.assertNotFinalized()
-	if _, has := s.leafClassMap[newClass.Name]; has {
-		panic(fmt.Sprintf("ObjParser already has a leaf-class named \"%s\"", newClass.Name))
-	}
-	if _, has := s.ruleMap[newClass.Name]; has {
-		panic(fmt.Sprintf("ObjParser already has a rule named \"%s\"; can't name a leaf-class the same", newClass.Name))
-	}
-	if _, has := s.classMap[newClass.Name]; has {
-		panic(fmt.Sprintf("ObjParser already has a class named \"%s\"; can't name a leaf-class the same", newClass.Name))
+	if ot, has := s.namespace[newClass.Name]; has {
+		panic(fmt.Sprintf("ObjParser already has a %s named \"%s\"", OPTypeName(ot), newClass.Name))
 	}
 	s.leafClassMap[newClass.Name] = newClass
-}
-
-func (s *ObjParser[I, O]) RegisterClass(newClass *ObjParserClass[O]) {
-	s.assertNotFinalized()
-	if _, has := s.classMap[newClass.Name]; has {
-		panic(fmt.Sprintf("ObjParser already has a class named \"%s\"", newClass.Name))
-	}
-	if _, has := s.ruleMap[newClass.Name]; has {
-		panic(fmt.Sprintf("ObjParser already has a rule named \"%s\"; can't name a class the same", newClass.Name))
-	}
-	if _, has := s.leafClassMap[newClass.Name]; has {
-		panic(fmt.Sprintf("ObjParser already has a leaf-class named \"%s\"; can't name a class the same", newClass.Name))
-	}
-	s.classMap[newClass.Name] = newClass
+	s.namespace[newClass.Name] = 'C'
 }
 
 func (s *ObjParser[I, O]) RegisterRule(newRule *ObjParserRule[O]) {
 	s.assertNotFinalized()
-	if _, has := s.ruleMap[newRule.Name]; has {
-		panic(fmt.Sprintf("ObjParser already has a rule named \"%s\"", newRule.Name))
-	}
-	if _, has := s.classMap[newRule.Name]; has {
-		panic(fmt.Sprintf("ObjParser already has a class named \"%s\"; can't name a rule the same", newRule.Name))
-	}
-	if _, has := s.leafClassMap[newRule.Name]; has {
-		panic(fmt.Sprintf("ObjParser already has a leaf-class named \"%s\"; can't name a rule the same", newRule.Name))
+	if ot, has := s.namespace[newRule.Name]; has {
+		panic(fmt.Sprintf("ObjParser already has a %s named \"%s\"", OPTypeName(ot), newRule.Name))
 	}
 
 	err := newRule.tokenizePatterns()
@@ -131,8 +110,180 @@ func (s *ObjParser[I, O]) RegisterRule(newRule *ObjParserRule[O]) {
 	}
 
 	s.ruleMap[newRule.Name] = newRule
-	s.orderedRules = append(s.orderedRules, newRule)
+	//	s.orderedRules = append(s.orderedRules, newRule)
+	s.namespace[newRule.Name] = 'R'
 }
+
+func (s *ObjParser[I, O]) RegisterIOMap(m map[string]I, f func(string, I) O) {
+	s.assertNotFinalized()
+	if len(s.ioMap) > 0 {
+		panic("IOMap can only be registered once")
+	}
+
+	for name, _ := range m {
+		if ot, has := s.namespace[name]; has {
+			panic(fmt.Sprintf("ObjParser already has a %s named \"%s\"", OPTypeName(ot), name))
+		}
+		s.namespace[name] = 'M'
+	}
+	s.ioMap = m
+	s.ioMapper = f
+}
+
+func (s *ObjParser[I, O]) RegisterIOSeqMap(m map[string][]I, f func(string, []I) O) {
+	s.assertNotFinalized()
+	if len(s.ioSeqMap) > 0 {
+		panic("IOSeqMap can only be registered once")
+	}
+
+	for name, _ := range m {
+		if ot, has := s.namespace[name]; has {
+			panic(fmt.Sprintf("ObjParser already has a %s named \"%s\"", OPTypeName(ot), name))
+		}
+		s.namespace[name] = 'S'
+	}
+	s.ioSeqMap = m
+	s.ioSeqMapper = f
+}
+
+func (s *ObjParser[I, O]) Finalize() {
+	s.assertNotFinalized()
+
+	// Sanity-check the targets
+	for _, name := range s.targetNames {
+		if _, has := s.namespace[name]; !has {
+			panic(fmt.Sprintf("Did not find a registered item for target \"%s\"", name))
+		}
+	}
+
+	// Sanity-check that the rules reference things that exists
+	for rname, rule := range s.ruleMap {
+		for _, pname := range rule.getAllPatternTokenNames() {
+			if _, has := s.namespace[pname]; !has {
+				panic(fmt.Sprintf("Rule \"%s\" references item \"%s\" but it is not defined", rname, pname))
+			}
+		}
+	}
+
+	// Creating the root tree node is a little special
+	s.tree.Initialize(OPOr, "", len(s.targetNames))
+
+	todo := make([]*ObjParserTree[O], 0)
+	for _, name := range s.targetNames {
+		chNode, newNodesToExamine := s.newTreeChild(name)
+		s.tree.children = append(s.tree.children, chNode)
+		todo = append(todo, newNodesToExamine...)
+	}
+
+	// Now create the rest of the tree
+
+	for len(todo) > 0 {
+		//nextNode := todo[0]
+		todo = todo[1:]
+
+		//newNodesToExamine := s.expandChildren(nextNode)
+		//todo = append(todo, newNodesToExamine)
+	}
+
+	s.finalizedOk = true
+}
+
+/*
+type opTreeEdge struct {
+	parentNode *ObjParserTree
+	childName  string
+}
+*/
+
+func (s *ObjParser[I, O]) newTreeChild(chName string) (*ObjParserTree[O], []*ObjParserTree[O]) {
+	var newNode *ObjParserTree[O]
+	toExamine := make([]*ObjParserTree[O], 0)
+	chOpType := s.namespace[chName]
+
+	switch chOpType {
+	case OPRule:
+		newNode, toExamine = s.newTreeChildRule(chName)
+
+	case OPLeafClass:
+		newNode = NewObjParserTree[O](OPLeafClass, chName, 0)
+
+	case OPIOMap:
+		newNode = NewObjParserTree[O](OPIOMap, chName, 0)
+
+	case OPIOSeq:
+		newNode = NewObjParserTree[O](OPIOSeq, chName, 0)
+
+	case OPAnd:
+		panic(fmt.Sprintf("Should not have seen OpIOSeqMap for node %s", chName))
+
+	case OPOr:
+		panic(fmt.Sprintf("Should not have seen OpIOSeqMap for node %s", chName))
+
+	case OPPatternToken:
+		panic(fmt.Sprintf("Should not have seen OpPatternToken for node %s", chName))
+	}
+
+	return newNode, toExamine
+}
+
+func (s *ObjParser[I, O]) newTreeChildRule(chName string) (*ObjParserTree[O], []*ObjParserTree[O]) {
+
+	r := s.ruleMap[chName]
+
+	if len(r.Patterns) == 1 {
+		// If there's only one pattern, we don't need a rule (OR) node
+		newNode, toExamine := s.newTreeChildRulePattern(chName, 0)
+		return newNode, toExamine
+	}
+
+	// Create the rule node
+	rNode := NewObjParserTree[O](OPOr, chName, len(r.Patterns))
+	toExamine := make([]*ObjParserTree[O], 0)
+
+	for pi, _ := range r.Patterns {
+		pNode, pToExamine := s.newTreeChildRulePattern(chName, pi)
+		rNode.children = append(rNode.children, pNode)
+		toExamine = append(toExamine, pToExamine...)
+	}
+	return rNode, toExamine
+}
+
+func (s *ObjParser[I, O]) newTreeChildRulePattern(chName string, patternN int) (*ObjParserTree[O], []*ObjParserTree[O]) {
+
+	r := s.ruleMap[chName]
+	p := r.Patterns[patternN]
+
+	if len(p.patternTokens) == 1 {
+		// If there's only one token, we don't need a pattern (AND) node
+		newNode, toExamine := s.newTreeChildPatternToken(p.patternTokens[0])
+		return newNode, toExamine
+	}
+
+	// Create the pattern node
+	patternName := fmt.Sprintf("%s pattern #%d", chName, patternN+1)
+	pNode := NewObjParserTree[O](OPAnd, patternName, len(p.patternTokens))
+	toExamine := make([]*ObjParserTree[O], 0)
+
+	for _, t := range p.patternTokens {
+		tNode, tToExamine := s.newTreeChildPatternToken(t)
+		pNode.children = append(pNode.children, tNode)
+		toExamine = append(toExamine, tToExamine...)
+	}
+	return pNode, toExamine
+
+}
+
+func (s *ObjParser[I, O]) newTreeChildPatternToken(token *objParserPatternToken) (*ObjParserTree[O], []*ObjParserTree[O]) {
+	newNode := NewObjParserTree[O](OPPatternToken, token.ShownAs, 0)
+	newNode.patternToken = token
+
+	chNode, toExamine := s.newTreeChild(token.TargetName)
+	newNode.children = append(newNode.children, chNode)
+
+	return newNode, toExamine
+}
+
+// -----------------------------------------------------------------------------------
 
 // Parse the input and return all possible outputs, or an error
 func (s *ObjParser[I, O]) Parse(input []I) ([]O, error) {
@@ -156,36 +307,31 @@ func (s *objParserState[I, O]) Initialize(parser *ObjParser[I, O]) {
 func (s *objParserState[I, O]) Parse(input []I) ([]O, error) {
 	s.input = input
 	s.results = make([]O, 0, 1)
+	/*
+		// run through the tree of rule/classes/leafClasses
+		trialNodes := make([]*objParserTrialNode[I, O], 0, len(s.objParser.targetNames))
 
-	// run through the tree of rule/classes/leafClasses
-	trialNodes := make([]*objParserTrialNode[I, O], 0, len(s.objParser.targetNames))
-
-	for _, targetName := range s.objParser.targetNames {
-		if r, has := s.objParser.ruleMap[targetName]; has {
-			for pi, p := range r.Patterns {
+		for _, targetName := range s.objParser.targetNames {
+			if r, has := s.objParser.ruleMap[targetName]; has {
+				for pi, p := range r.Patterns {
+					trialNode := &objParserTrialNode[I, O]{
+						rule:         r,
+						rulePattern:  p,
+						rulePatternN: pi,
+						children:     make([]*objParserTrialNode[I, O], 0),
+					}
+					trialNodes = append(trialNodes, trialNode)
+				}
+				continue
+			}
+			if c, has := s.objParser.leafClassMap[targetName]; has {
 				trialNode := &objParserTrialNode[I, O]{
-					rule:         r,
-					rulePattern:  p,
-					rulePatternN: pi,
-					children:     make([]*objParserTrialNode[I, O], 0),
+					leafClass: c,
+					children:  make([]*objParserTrialNode[I, O], 0),
 				}
 				trialNodes = append(trialNodes, trialNode)
+				continue
 			}
-			continue
-		}
-		if c, has := s.objParser.leafClassMap[targetName]; has {
-			trialNode := &objParserTrialNode[I, O]{
-				leafClass: c,
-				children:  make([]*objParserTrialNode[I, O], 0),
-			}
-			trialNodes = append(trialNodes, trialNode)
-			continue
-		}
-	}
-
-	/*
-		for _, trialNode := range trialNodes {
-			trialNode.Try(s, 0)
 		}
 	*/
 
@@ -254,6 +400,7 @@ type ObjParserRulePattern[O ObjParserResult] struct {
 }
 
 type objParserPatternToken struct {
+	ShownAs    string
 	TargetName string
 	ExactCount int
 	// -1 == no minimum
@@ -283,6 +430,7 @@ func (s *ObjParserRulePattern[O]) tokenizePattern() error {
 					return fmt.Errorf("Can't convert %s to integer: %w", m[count_i], err)
 				}
 				opToken = &objParserPatternToken{
+					ShownAs:    ruleToken,
 					TargetName: m[name_i],
 					ExactCount: count,
 					MinCount:   count,
