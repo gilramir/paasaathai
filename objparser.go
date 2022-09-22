@@ -34,9 +34,10 @@ func OPTypeName(t OPType) string {
 		return "AND"
 	case OPOr:
 		return "OR"
-	default:
-		return fmt.Sprintf("Error: '%v' is not a valid OPType", t)
+	case OPPatternToken:
+		return "PatternToken"
 	}
+	return fmt.Sprintf("Error: '%v' is not a valid OPType", t)
 }
 
 // The output type O must conform to the ObjParserResult interface
@@ -166,24 +167,33 @@ func (s *ObjParser[I, O]) Finalize() {
 	}
 
 	// Creating the root tree node is a little special
-	s.tree.Initialize(OPOr, "", len(s.targetNames))
-
 	todo := make([]*ObjParserTree[O], 0)
-	for _, name := range s.targetNames {
-		chNode, newNodesToExamine := s.newTreeChild(name)
-		s.tree.children = append(s.tree.children, chNode)
+	if len(s.targetNames) == 1 {
+		newNode, newNodesToExamine := s.newTreeChild(s.targetNames[0])
+		s.tree = *newNode
 		todo = append(todo, newNodesToExamine...)
+	} else {
+		s.tree.Initialize(OPOr, "", len(s.targetNames))
+
+		for _, name := range s.targetNames {
+			chNode, newNodesToExamine := s.newTreeChild(name)
+			s.tree.children = append(s.tree.children, chNode)
+			fmt.Printf("Got target node: %s\n", chNode.Repr())
+			todo = append(todo, newNodesToExamine...)
+		}
 	}
 
 	// Now create the rest of the tree
 
 	for len(todo) > 0 {
-		//nextNode := todo[0]
+		nextNode := todo[0]
 		todo = todo[1:]
 
-		//newNodesToExamine := s.expandChildren(nextNode)
-		//todo = append(todo, newNodesToExamine)
+		fmt.Printf("need to expand: %s\n", nextNode.Repr())
+		newNodesToExamine := s.expandChildren(nextNode)
+		todo = append(todo, newNodesToExamine...)
 	}
+	s.tree.Dump()
 
 	s.finalizedOk = true
 }
@@ -194,6 +204,43 @@ type opTreeEdge struct {
 	childName  string
 }
 */
+func (s *ObjParser[I, O]) expandChildren(node *ObjParserTree[O]) []*ObjParserTree[O] {
+	newNodes := make([]*ObjParserTree[O], 0, len(node.children))
+	/*
+		for _, child := range node.children {
+			switch node.opType {
+			case OPRule:
+				newNode, toExamine := s.newTreeChildRule(chName)
+				newNodes = append(newNodes, newNode)
+				newNodes = append(newNodes, toExamine...)
+
+			case OPLeafClass:
+				newNode := NewObjParserTree[O](OPLeafClass, chName, 0)
+				newNodes = append(newNodes, newNode)
+
+			case OPIOMap:
+				newNode := NewObjParserTree[O](OPIOMap, chName, 0)
+				newNodes = append(newNodes, newNode)
+
+			case OPIOSeq:
+				newNode := NewObjParserTree[O](OPIOSeq, chName, 0)
+				newNodes = append(newNodes, newNode)
+
+			case OPAnd:
+				panic(fmt.Sprintf("Should not have seen OpIOSeqMap for node %s", chName))
+
+			case OPOr:
+				panic(fmt.Sprintf("Should not have seen OpIOSeqMap for node %s", chName))
+
+			case OPPatternToken:
+				panic(fmt.Sprintf("Should not have seen OpPatternToken for node %s", chName))
+			}
+
+		}
+	*/
+	return newNodes
+
+}
 
 func (s *ObjParser[I, O]) newTreeChild(chName string) (*ObjParserTree[O], []*ObjParserTree[O]) {
 	var newNode *ObjParserTree[O]
@@ -338,6 +385,7 @@ func (s *objParserState[I, O]) Parse(input []I) ([]O, error) {
 	return s.results, nil
 }
 
+/*
 type objParserTrialNode[I any, O ObjParserResult] struct {
 	rule         *ObjParserRule[O]
 	rulePattern  *ObjParserRulePattern[O]
@@ -347,6 +395,7 @@ type objParserTrialNode[I any, O ObjParserResult] struct {
 
 	children []*objParserTrialNode[I, O]
 }
+*/
 
 // -----------------------------------------------------------------------------------
 func ObjParserAssertLenInputs[O ObjParserResult](inputs []O, size int) {
@@ -414,7 +463,7 @@ var re_exact_count = regexp.MustCompile(`^(?P<name>[A-Za-z\d_]+){(?P<count>\d+)}
 
 func (s *ObjParserRulePattern[O]) tokenizePattern() error {
 	s.patternTokens = make([]*objParserPatternToken, 0, 1)
-	ruleTokens := strings.Split(s.Pattern, " \t\n")
+	ruleTokens := strings.Split(s.Pattern, " ")
 	for ti, ruleToken := range ruleTokens {
 		var m []string
 		var opToken *objParserPatternToken
@@ -438,6 +487,8 @@ func (s *ObjParserRulePattern[O]) tokenizePattern() error {
 				}
 			}
 		}
+
+		// ioMap
 
 		// No match?
 		if opToken == nil {

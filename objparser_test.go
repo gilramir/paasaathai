@@ -61,7 +61,8 @@ var RuleTwoVowels = &ObjParserRule[*TASTNode]{
 	Name: "TwoVowels",
 	Patterns: []*ObjParserRulePattern[*TASTNode]{
 		&ObjParserRulePattern[*TASTNode]{
-			Pattern: "Vowel{2}",
+			//Pattern: "Vowel{2}",
+			Pattern: "Vowel{2} A B C",
 			Matched: func(inputs []*TASTNode) *TASTNode {
 				ObjParserAssertLenInputs(inputs, 2)
 				values := make([]string, len(inputs[0].values)+len(inputs[1].values))
@@ -84,9 +85,12 @@ func (s *TASTNode) SetConsumed(v int) {
 	s.consumed = v
 }
 
+// need to do the rule pattern tokenizatoin after everything is registered, i
+// nthe finalzie step.
+
 func (s *MySuite) TestOP01(c *C) {
 	var parser ObjParser[string, *TASTNode]
-	parser.Initialize("TwoVowels")
+	parser.Initialize("TwoVowels", "Vowel")
 	parser.RegisterLeafClass(LeafClassVowel)
 	parser.RegisterRule(RuleTwoVowels)
 	parser.RegisterIOMap(ioMap, ioMapper)
