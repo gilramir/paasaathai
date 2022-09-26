@@ -1,4 +1,4 @@
-package paasaathai
+package gparser
 
 import (
 	"log"
