@@ -11,7 +11,6 @@ type ParserTree[O ParserResult] struct {
 	childrenNames []string
 
 	finalized bool
-	attempted bool
 	/*
 		success   bool
 		output    O
@@ -30,7 +29,6 @@ func (s *ParserTree[O]) CopyInto(t *ParserTree[O]) {
 	t.name = s.name
 	t.childrenNames = s.childrenNames
 	t.finalized = s.finalized
-	t.attempted = s.attempted
 	t.item = s.item
 	t.children = s.children
 }
@@ -57,17 +55,6 @@ func (s *ParserTree[O]) dumpLevel(level int) {
 	fmt.Printf("%s%s\n", spaces, s.Repr())
 	for _, child := range s.children {
 		child.dumpLevel(level + 1)
-	}
-}
-
-func (s *ParserTree[O]) assertAttempted() {
-	if !s.attempted {
-		panic("ParserTree.Attempt() has not been called yet")
-	}
-}
-func (s *ParserTree[O]) assertNotAttempted() {
-	if s.attempted {
-		panic("Parser.Attempt() has already been called.")
 	}
 }
 
@@ -98,14 +85,12 @@ func NewTreeNode[O ParserResult](name string) *ParserTree[O] {
 }
 
 func (s *ParserTree[O]) InitializeSetName(name string) {
-	s.assertNotAttempted()
 	s.assertNotFinalized()
 	s.name = name
 	s.children = make([]*ParserTree[O], 0)
 }
 
 func (s *ParserTree[O]) AddChild(chName string) *ParserTree[O] {
-	s.assertNotAttempted()
 	s.assertNotFinalized()
 	ch := NewTreeNode[O](chName)
 	s.children = append(s.children, ch)
@@ -119,7 +104,6 @@ func NewTreeNodeWithItem[O ParserResult](item TreeNode[O], name string, capacity
 }
 
 func (s *ParserTree[O]) InitializeSetItem(item TreeNode[O], name string, capacity int) {
-	s.assertNotAttempted()
 	s.assertNotFinalized()
 	s.item = item
 	s.name = name
@@ -128,7 +112,6 @@ func (s *ParserTree[O]) InitializeSetItem(item TreeNode[O], name string, capacit
 
 /*
 func (s *ParserTree[O]) InitializeSetType(opType NodeType, name string, capacity int) {
-	s.assertNotAttempted()
 	s.assertNotFinalized()
 	s.opType = opType
 	s.name = name
@@ -137,7 +120,6 @@ func (s *ParserTree[O]) InitializeSetType(opType NodeType, name string, capacity
 */
 
 func (s *ParserTree[O]) SetFinalized() {
-	s.assertNotAttempted()
 	s.assertNotFinalized()
 	s.finalized = true
 }
@@ -145,7 +127,6 @@ func (s *ParserTree[O]) SetFinalized() {
 // WILL BE REMOVED
 /*
 func (s *ParserTree[O]) Initialize(opType NodeType, name string, capacity int) {
-	s.assertNotAttempted()
 	s.opType = opType
 	s.name = name
 	s.children = make([]*ParserTree[O], 0, capacity)
@@ -156,7 +137,6 @@ func (s *ParserTree[O]) Initialize(opType NodeType, name string, capacity int) {
 /*
 func (s *ParserTree[O]) AddNewChild(opType NodeType, chName string, capacity int) *ParserTree[O] {
 	fmt.Printf("AddnewChild: %s\n", chName)
-	s.assertNotAttempted()
 	ch := NewParserTree[O](opType, chName, capacity)
 	s.children = append(s.children, ch)
 	return ch

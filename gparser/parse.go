@@ -8,14 +8,19 @@ import (
 type TrialStack[I any, O ParserResult] struct {
 	inputPosition int
 	nodeStack     []*ParserTree[O]
+	childrenItems []*ParserTree[O]
 }
 
 func (s *TrialStack[I, O]) Dump() {
+	fmt.Printf("%s\n", s.Repr())
+}
+
+func (s *TrialStack[I, O]) Repr() string {
 	nodeStrings := make([]string, len(s.nodeStack))
 	for i, ns := range s.nodeStack {
 		nodeStrings[i] = ns.Repr()
 	}
-	fmt.Printf("<TrialStack iPos=%d nodes=%s>\n", s.inputPosition, strings.Join(nodeStrings, ", "))
+	return fmt.Sprintf("<TrialStack iPos=%d nodes=%s>", s.inputPosition, strings.Join(nodeStrings, ", "))
 }
 
 // -----------------------------------------------------------------------------------
@@ -46,6 +51,11 @@ func (s *Parser[I, O]) Parse(input []I) ([]O, error) {
 
 func (s *TrialStack[I, O]) Parse(input []I, trialStacks *[]*TrialStack[I, O], results *[]O) {
 
+	fmt.Printf("Parse: %s\n", s.Repr())
+	fmt.Printf("Input: %v\n", input)
+
+	item := s.nodeStack[len(s.nodeStack)-1].item
+	fmt.Printf("Node item: %v\n", item)
 }
 
 // -----------------------------------------------------------------------------------
