@@ -11,6 +11,7 @@ import (
 
 /*
  * Represents an NFA state plus zero or one or two arrows exiting.
+ * if c == 0, it's an IOClass, and only out is set
  * if c == Match, no arrows out; matching state.
  * If c == Split, unlabeled arrows to out and out1 (if != NULL).
  */
@@ -26,32 +27,41 @@ type State[I any, O ParserResult] struct {
 	lastlist  int
 }
 
+func (s *State[I, O]) Repr0() string {
+	var label string
+	if s.c == Match {
+		label = "MATCH"
+	} else if s.c == Split {
+		label = "SPLIT"
+	} else {
+		label = s.io.Name
+	}
+	return fmt.Sprintf("<State %s lastlist=%d>", label, s.lastlist)
+}
+
 func (s *State[I, O]) Repr() string {
 	return s.ReprN(0)
 }
 
 func (s *State[I, O]) ReprN(n int) string {
 	indent := strings.Repeat("  ", n)
-	if s.c == Match {
-		return fmt.Sprintf("%s<State MATCH lastlist=%d>", indent, s.lastlist)
-	} else if s.c == Split {
-		txt := fmt.Sprintf("%s<State SPLIT lastlist=%d>", indent, s.lastlist)
-		if s.out != nil {
-			txt += "\n" + s.out.ReprN(n+1)
-		}
-		if s.out1 != nil {
-			txt += "\n" + s.out1.ReprN(n+1)
-		}
-		return txt
-	} else {
-		txt := fmt.Sprintf("%s<State %s lastlist=%d>", indent, s.io.Name, s.lastlist)
-		if s.out != nil {
-			txt += "\n" + s.out.ReprN(n+1)
-		}
-		if s.out1 != nil {
-			txt += "\n" + s.out1.ReprN(n+1)
-		}
-		return txt
+	txt := fmt.Sprintf("%s%s", indent, s.Repr0())
+	if s.out != nil {
+		txt += "\n" + s.out.ReprN(n+1)
+	}
+	if s.out1 != nil {
+		txt += "\n" + s.out1.ReprN(n+1)
+	}
+	return txt
+}
+
+func (s *State[I, O]) RecursiveClearState() {
+	s.lastlist = 0
+	if s.out != nil {
+		s.out.RecursiveClearState()
+	}
+	if s.out1 != nil {
+		s.out1.RecursiveClearState()
 	}
 }
 
@@ -107,23 +117,58 @@ func (s *Parser[I, O]) node2nfa(node *ParserTree[O]) {
 
 	switch node.item.NodeType() {
 	default:
-		fmt.Printf("node2nfa: %s not yet handled\n", NodeTypeName(node.item.NodeType()))
+		e := fmt.Sprintf("node2nfa: %s not yet handled\n", NodeTypeName(node.item.NodeType()))
+		panic(e)
 
 	case OPIOClass:
 		ns := State[I, O]{io: node.item.(*IOClass[I, O]), out: nil, out1: nil}
 		s.stack[s.stp] = Frag[I, O]{&ns, []**State[I, O]{&ns.out}}
 		s.stp++
 		s.ensure_stack_space()
-	}
 
+	case OPOr: /*alternate*/
+		// Create entries in the stack for each child, and along the
+		// way, pair them with SPLIT nodes. Each SPLIT node can only
+		// have 2 outputs
+		if len(node.children) < 2 {
+			panic(fmt.Sprintf("%s has only %d children", node.Repr(), len(node.children)))
+		}
+		for i, ch := range node.children {
+			s.node2nfa(ch)
+			if i >= 1 {
+
+				s.stp--
+				e2 := s.stack[s.stp]
+				s.stp--
+				e1 := s.stack[s.stp]
+				ns := State[I, O]{c: Split, out: e1.start, out1: e2.start}
+				s.stack[s.stp] = Frag[I, O]{&ns, append(e1.out, e2.out...)}
+				s.stp++
+				// No need to call ensure_stack_space here; we popped 2
+				// and added 1
+			}
+		}
+	}
 }
 
 func (s *Parser[I, O]) Parse(input []I) ([]O, error) {
 	fmt.Printf("Parsing %v\n", input)
 	o := make([]O, 0)
+	// Reset the state after any previous parse
+	s.nfa.RecursiveClearState()
+	s.listid = 0
+
 	m := s.match(s.nfa, input)
 	fmt.Printf("Matches: %v\n", m)
 	return o, nil
+}
+
+func (s *Parser[I, O]) stateListRepr(stateList []*State[I, O]) string {
+	labels := make([]string, len(stateList))
+	for i, ns := range stateList {
+		labels[i] = ns.Repr0()
+	}
+	return fmt.Sprintf("[%s]", strings.Join(labels, ", "))
 }
 
 func (s *Parser[I, O]) match(start *State[I, O], input []I) bool {
@@ -132,7 +177,10 @@ func (s *Parser[I, O]) match(start *State[I, O], input []I) bool {
 	s.listid++
 	clist = s.addstate(clist, start)
 
-	for _, ch := range input {
+	for i, ch := range input {
+		fmt.Printf("Input #%d: %v: clist=%s nlist=%s\n",
+			i, ch, s.stateListRepr(clist),
+			s.stateListRepr(nlist))
 		nlist = s.step(clist, ch, nlist)
 		clist, nlist = nlist, clist
 	}
@@ -162,9 +210,14 @@ func (s *Parser[I, O]) addstate(l []*State[I, O], ns *State[I, O]) []*State[I, O
 func (s *Parser[I, O]) step(clist []*State[I, O], ch I, nlist []*State[I, O]) []*State[I, O] {
 	s.listid++
 	nlist = nlist[:0]
-	for _, ns := range clist {
+	fmt.Printf("step: nlist=%s\n", s.stateListRepr(nlist))
+	for i, ns := range clist {
+		if ns.io == nil {
+			continue
+		}
 		m, _ := ns.io.Matches(ch)
-		// TODO - how to record this?
+		fmt.Printf("step: clist %d %s => %v\n", i, ns.Repr0(), m)
+		// TODO - how to record the output?
 		if m {
 			nlist = s.addstate(nlist, ns.out)
 		}

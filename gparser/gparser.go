@@ -25,7 +25,6 @@ type Parser[I any, O ParserResult] struct {
 
 	/* Singleton matching state used to denote all end states*/
 	matchstate State[I, O]
-	nstate     int
 	listid     int
 
 	namespace  map[string]NodeType
