@@ -51,38 +51,11 @@ func (s *Parser[I, O]) Finalize() {
 		newNodesToExamine := s.expandNamedNode(thisNode)
 		todo = append(todo, newNodesToExamine...)
 	}
-
-	/*
-		// Creating the root tree node is a little special
-		todo := make([]*ParserTree[O], 0)
-		if len(s.targetNames) == 1 {
-			newNode, newNodesToExamine := s.newTreeChild(s.targetNames[0])
-			s.tree = *newNode
-			todo = append(todo, newNodesToExamine...)
-		} else {
-			s.tree.Initialize(OPOr, "", len(s.targetNames))
-
-			for _, name := range s.targetNames {
-				chNode, newNodesToExamine := s.newTreeChild(name)
-				s.tree.children = append(s.tree.children, chNode)
-				fmt.Printf("Got target node: %s\n", chNode.Repr())
-				todo = append(todo, newNodesToExamine...)
-			}
-		}
-
-		// Now create the rest of the tree
-
-		for len(todo) > 0 {
-			nextNode := todo[0]
-			todo = todo[1:]
-
-			fmt.Printf("need to expand: %s\n", nextNode.Repr())
-			newNodesToExamine := s.expandChildren(nextNode)
-			todo = append(todo, newNodesToExamine...)
-		}
-	*/
-
 	s.tree.Dump()
+
+	// Now that the parser definition is parsed into a tree, convert
+	// into a non-deterministic finite automata (NFA).
+	s.tree2nfa()
 
 	s.finalizedOk = true
 }

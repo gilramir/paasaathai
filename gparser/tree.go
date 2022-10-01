@@ -151,13 +151,15 @@ type TreeNode[O ParserResult] interface {
 type NodeType rune
 
 const (
-	OPRule         = 'R'
-	OPIOClass      = 'C'
-	OPIOMap        = 'M'
-	OPIOSeq        = 'S'
+	OPRule    = 'R'
+	OPIOClass = 'C'
+	//OPIOMap        = 'M'
+	//OPIOSeq        = 'S'
 	OPPatternToken = 't'
 	OPAnd          = '&'
 	OPOr           = '|'
+	// Used only in NFA
+	OPMatch = 'm'
 )
 
 func NodeTypeName(t NodeType) string {
@@ -166,16 +168,20 @@ func NodeTypeName(t NodeType) string {
 		return "Rule"
 	case OPIOClass:
 		return "IOClass"
-	case OPIOMap:
-		return "IOMap"
-	case OPIOSeq:
-		return "IOSeq"
+		/*
+			case OPIOMap:
+				return "IOMap"
+			case OPIOSeq:
+				return "IOSeq"
+		*/
 	case OPAnd:
 		return "AND"
 	case OPOr:
 		return "OR"
 	case OPPatternToken:
 		return "PatternToken"
+	case OPMatch:
+		return "Match"
 	}
 	return fmt.Sprintf("Error: '%v' is not a valid NodeType", t)
 }

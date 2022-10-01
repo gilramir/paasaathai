@@ -26,10 +26,7 @@ func (s *TrialStack[I, O]) Repr() string {
 // -----------------------------------------------------------------------------------
 
 // Parse the input and return all possible outputs, or an error
-func (s *Parser[I, O]) Parse(input []I) ([]O, error) {
-	//	var pstate objParserState[I, O]
-	//	pstate.Initialize(s)
-
+func (s *Parser[I, O]) xxxParse(input []I) ([]O, error) {
 	trialStacks := make([]*TrialStack[I, O], 1)
 	firstTs := &TrialStack[I, O]{
 		nodeStack: make([]*ParserTree[O], 1),

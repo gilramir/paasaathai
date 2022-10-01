@@ -17,6 +17,17 @@ type Parser[I any, O ParserResult] struct {
 	targetNames []string
 	tree        ParserTree[O]
 
+	// stack pointer, while building nfastack
+	stp   int
+	stack []Frag[I, O]
+
+	nfa *State[I, O]
+
+	/* Singleton matching state used to denote all end states*/
+	matchstate State[I, O]
+	nstate     int
+	listid     int
+
 	namespace  map[string]NodeType
 	ruleMap    map[string]*ParserRule[O]
 	ioClassMap map[string]*IOClass[I, O]
@@ -44,6 +55,7 @@ func (s *Parser[I, O]) Initialize(targetNames ...string) {
 		s.ioMap = make(map[string]I)
 		s.ioSeqMap = make(map[string][]I)
 	*/
+	s.matchstate = State[I, O]{c: Match}
 }
 
 func (s *Parser[I, O]) assertFinalized() {

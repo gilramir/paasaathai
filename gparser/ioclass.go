@@ -29,3 +29,11 @@ func (s *LogicalItemAnd) NodeType() NodeType {
 func NewItemAnd() *LogicalItemAnd {
 	return &LogicalItemAnd{}
 }
+
+/*
+type MatchItem struct{}
+
+func (s *MatchItem) NodeType() NodeType {
+	return OPMatch
+}
+*/
