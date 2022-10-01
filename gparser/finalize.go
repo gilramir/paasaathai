@@ -26,7 +26,7 @@ func (s *Parser[I, O]) Finalize() {
 	todo := make([]*ParserTree[O], 0)
 
 	// Creating the root tree node is a little special
-	fmt.Printf("Target names: %v\n", s.targetNames)
+	//	fmt.Printf("Target names: %v\n", s.targetNames)
 	if len(s.targetNames) == 1 {
 		s.tree.name = s.targetNames[0]
 		todo = append(todo, &s.tree)
@@ -46,7 +46,7 @@ func (s *Parser[I, O]) Finalize() {
 		thisNode := todo[0]
 		todo = todo[1:]
 
-		fmt.Printf("need to expand: %s\n", thisNode.Repr())
+		//		fmt.Printf("need to expand: %s\n", thisNode.Repr())
 
 		newNodesToExamine := s.expandNamedNode(thisNode)
 		todo = append(todo, newNodesToExamine...)
@@ -105,7 +105,7 @@ func (s *Parser[I, O]) expandNamedNode(node *ParserTree[O]) []*ParserTree[O] {
 		panic(fmt.Sprintf("Did not find node named '%s'\n", node.name))
 	}
 
-	fmt.Printf("expanding %s\n", node.name)
+	//	fmt.Printf("expanding named node %s\n", node.name)
 	newNodes := make([]*ParserTree[O], 0, len(node.childrenNames))
 	switch nodeType {
 	case OPRule:
@@ -123,7 +123,8 @@ func (s *Parser[I, O]) expandNamedNode(node *ParserTree[O]) []*ParserTree[O] {
 	}
 
 	for _, chName := range node.childrenNames {
-		chNode := s.tree.AddChild(chName)
+		//chNode := s.tree.AddChild(chName)
+		chNode := node.AddChild(chName)
 		newNodes = append(newNodes, chNode)
 	}
 
@@ -170,19 +171,22 @@ func (s *Parser[I, O]) expandRulePattern(r *ParserRule[O], patternN int) (*Parse
 	newNodes := make([]*ParserTree[O], 0)
 
 	for ti, _ := range p.Tokens {
-		tNode, tNewNodes := s.expandRulePatternToken(r, p, ti)
-		newNodes = append(newNodes, tNewNodes...)
+		tNode, _ := s.expandRulePatternToken(r, p, ti)
+		//newNodes = append(newNodes, tNewNodes...)
+		newNodes = append(newNodes, tNode)
 		andNode.children = append(andNode.children, tNode)
 	}
+	//fmt.Printf("andNode children=%v\n", andNode.children)
 	return andNode, newNodes
 }
 
+// TODO - remove 2nd returned argument
 func (s *Parser[I, O]) expandRulePatternToken(r *ParserRule[O], p *ParserRulePattern[O], tokenN int) (*ParserTree[O], []*ParserTree[O]) {
 	t := p.Tokens[tokenN]
 
 	newNode := NewTreeNodeWithItem[O](t, t.ShownAs, 0)
 
-	newNode.childrenNames = append(newNode.childrenNames, t.TargetName)
+	//	newNode.childrenNames = append(newNode.childrenNames, t.TargetName)
 
 	newNodes := make([]*ParserTree[O], 0)
 

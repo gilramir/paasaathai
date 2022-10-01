@@ -61,12 +61,30 @@ func (s *ParserPatternToken) NodeType() NodeType {
 // Read the rule text and tokenize it
 var re_exact_count = regexp.MustCompile(`^(?P<name>[A-Za-z\d_]+){(?P<count>\d+)}$`)
 
+// Just the name of another item
+var re_simple_name = regexp.MustCompile(`^(?P<name>[A-Za-z\d_]+)$`)
+
 func (s *ParserRulePattern[O]) tokenizePattern() error {
 	s.Tokens = make([]*ParserPatternToken, 0, 1)
 	ruleTokens := strings.Split(s.Pattern, " ")
-	for ti, ruleToken := range ruleTokens {
+	for _, ruleToken := range ruleTokens {
 		var m []string
 		var opToken *ParserPatternToken
+
+		// re_simple_name
+		if opToken == nil {
+			m = re_simple_name.FindStringSubmatch(ruleToken)
+			if len(m) > 0 {
+				name_i := re_exact_count.SubexpIndex("name")
+				opToken = &ParserPatternToken{
+					ShownAs:    ruleToken,
+					TargetName: m[name_i],
+					ExactCount: 1,
+					MinCount:   1,
+					MaxCount:   1,
+				}
+			}
+		}
 
 		// re_exact_count
 		if opToken == nil {
@@ -92,7 +110,7 @@ func (s *ParserRulePattern[O]) tokenizePattern() error {
 
 		// No match?
 		if opToken == nil {
-			return fmt.Errorf("Did not find a matching rule pattern #%d: \"%s\"", ti+1, ruleToken)
+			return fmt.Errorf("Did not find a matching item name: \"%s\"", ruleToken)
 		} else {
 			s.Tokens = append(s.Tokens, opToken)
 		}

@@ -71,18 +71,23 @@ func ioSeqMapper(name string, inputTarget []string) *TASTNode {
 		consumed: len(inputTarget),
 	}
 }
-
-var RuleTwoVowels = &ParserRule[*TASTNode]{
-	Name: "TwoVowels",
+*/
+var RuleCVC = &ParserRule[*TASTNode]{
+	Name: "CVC",
 	Patterns: []*ParserRulePattern[*TASTNode]{
 		&ParserRulePattern[*TASTNode]{
-			//Pattern: "Vowel{2}",
-			Pattern: "Vowel{2} A B C",
+			Pattern: "Consonant Vowel Consonant",
 			Matched: func(inputs []*TASTNode) *TASTNode {
-				ParserAssertLenInputs(inputs, 2)
-				values := make([]string, len(inputs[0].values)+len(inputs[1].values))
-				copy(values, inputs[0].values)
-				copy(values[len(inputs[0].values):], inputs[1].values)
+				ParserAssertLenEq(inputs, 2)
+				// The test is just for ASCII characters, wo
+				// swe know a Consonant or a Vowel has 1 rune
+				ParserAssertLenEq(inputs[0].values, 1)
+				ParserAssertLenEq(inputs[1].values, 1)
+				ParserAssertLenEq(inputs[2].values, 1)
+				values := make([]rune, 3)
+				values[0] = inputs[0].values[0]
+				values[1] = inputs[1].values[0]
+				values[2] = inputs[2].values[0]
 				return &TASTNode{
 					values: values,
 				}
@@ -90,7 +95,6 @@ var RuleTwoVowels = &ParserRule[*TASTNode]{
 		},
 	},
 }
-*/
 
 type TASTNode struct {
 	values   []rune
@@ -139,6 +143,25 @@ func (s *MySuite) TestIOClass02(c *C) {
 	parser.Finalize()
 
 	input := []rune{'A'}
+	results, err := parser.Parse(input)
+	c.Assert(err, IsNil)
+	c.Assert(results, HasLen, 1)
+	c.Check(results[0].consumed, Equals, 1)
+}
+
+func (s *MySuite) TestRule01(c *C) {
+	var parser Parser[rune, *TASTNode]
+	parser.Initialize("CVC")
+	parser.RegisterIOClass(IOClassVowel)
+	parser.RegisterIOClass(IOClassConsonant)
+	parser.RegisterRule(RuleCVC)
+	/*
+		parser.RegisterIOMap(ioMap, ioMapper)
+		parser.RegisterIOSeqMap(ioSeqMap, ioSeqMapper)
+	*/
+	parser.Finalize()
+
+	input := []rune{'C', 'A', 'T'}
 	results, err := parser.Parse(input)
 	c.Assert(err, IsNil)
 	c.Assert(results, HasLen, 1)

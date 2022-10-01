@@ -119,8 +119,8 @@ func (s *Parser[I, O]) RegisterIOSeqMap(m map[string][]I, f func(string, []I) O)
 
 // This function can be called from with a Rule
 // This is only useful during development of gparser itself
-func ParserAssertLenInputs[O ParserResult](inputs []O, size int) {
+func ParserAssertLenEq[T any](inputs []T, size int) {
 	if len(inputs) != size {
-		panic(fmt.Sprintf("Expected %d inputs but got %d", size, len(inputs)))
+		panic(fmt.Sprintf("Expected len=%d but got %d", size, len(inputs)))
 	}
 }
