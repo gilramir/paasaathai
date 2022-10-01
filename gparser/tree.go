@@ -11,13 +11,8 @@ type ParserTree[O ParserResult] struct {
 	childrenNames []string
 
 	finalized bool
-	/*
-		success   bool
-		output    O
-	*/
 
 	item TreeNode[O]
-	//opType NodeType
 
 	children []*ParserTree[O]
 

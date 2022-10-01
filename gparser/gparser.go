@@ -17,15 +17,18 @@ type Parser[I any, O ParserResult] struct {
 	targetNames []string
 	tree        ParserTree[O]
 
-	// stack pointer, while building nfastack
+	// stack pointer, while building the NFA stack
 	stp   int
 	stack []Frag[I, O]
 
+	// the root note of the stack; where the parse begins
 	nfa *State[I, O]
 
 	/* Singleton matching state used to denote all end states*/
 	matchstate State[I, O]
-	listid     int
+
+	// State used during regex matching
+	listid int
 
 	namespace  map[string]NodeType
 	ruleMap    map[string]*ParserRule[O]

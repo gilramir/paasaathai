@@ -126,6 +126,27 @@ func (s *Parser[I, O]) node2nfa(node *ParserTree[O]) {
 		s.stp++
 		s.ensure_stack_space()
 
+	case OPAnd: /* concatenate */
+		if len(node.children) < 2 {
+			panic(fmt.Sprintf("%s has only %d children", node.Repr(), len(node.children)))
+		}
+
+		for i, ch := range node.children {
+			s.node2nfa(ch)
+			if i >= 1 {
+				s.stp--
+				e2 := s.stack[s.stp]
+				s.stp--
+				e1 := s.stack[s.stp]
+				/*concatenate*/
+				s.patch(e1.out, e2.start)
+				s.stack[s.stp] = Frag[I, O]{e1.start, e2.out}
+				s.stp++
+				// No need to call ensure_stack_space here; we popped 2
+				// and added 1
+			}
+		}
+
 	case OPOr: /*alternate*/
 		// Create entries in the stack for each child, and along the
 		// way, pair them with SPLIT nodes. Each SPLIT node can only
@@ -136,7 +157,6 @@ func (s *Parser[I, O]) node2nfa(node *ParserTree[O]) {
 		for i, ch := range node.children {
 			s.node2nfa(ch)
 			if i >= 1 {
-
 				s.stp--
 				e2 := s.stack[s.stp]
 				s.stp--
@@ -154,6 +174,7 @@ func (s *Parser[I, O]) node2nfa(node *ParserTree[O]) {
 func (s *Parser[I, O]) Parse(input []I) ([]O, error) {
 	fmt.Printf("Parsing %v\n", input)
 	o := make([]O, 0)
+
 	// Reset the state after any previous parse
 	s.nfa.RecursiveClearState()
 	s.listid = 0

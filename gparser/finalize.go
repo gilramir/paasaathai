@@ -60,13 +60,6 @@ func (s *Parser[I, O]) Finalize() {
 	s.finalizedOk = true
 }
 
-/*
-type opTreeEdge struct {
-	parentNode *ParserTree
-	childName  string
-}
-*/
-
 // The node has a name, but no item yet
 // Returns any new nodes with names that we need to iterate on
 func (s *Parser[I, O]) expandNamedNode(node *ParserTree[O]) []*ParserTree[O] {
