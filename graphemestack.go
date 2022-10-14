@@ -11,30 +11,30 @@ import (
 // Represents one vertical stack of characters that fit into one horizontal
 // character box, according to Unicode glyphs. It is generic for Unicode, not
 // Thai-specific. But, there are Thai-specific methods for investigating it.
-type GlyphStack struct {
+type GraphemeStack struct {
 	Runes []rune
 }
 
 // Implements the fmt.Stringer interface
-func (s *GlyphStack) String() string {
+func (s *GraphemeStack) String() string {
 	return string(s.Runes)
 }
 
-func (s *GlyphStack) Repr() string {
-	return fmt.Sprintf("<GlyphStack %s %s>", string(s.Runes), StringToRuneNames(string(s.Runes)))
+func (s *GraphemeStack) Repr() string {
+	return fmt.Sprintf("<GraphemeStack %s %s>", string(s.Runes), StringToRuneNames(string(s.Runes)))
 }
 
-func (s GlyphStack) IsThai() bool {
+func (s GraphemeStack) IsThai() bool {
 	return RuneIsThai(s.Runes[0])
 }
 
 /*
-func (s GlyphStack) StartsWithConsonant() bool {
+func (s GraphemeStack) StartsWithConsonant() bool {
 	return RuneIsConsonant(s.Runes[0])
 }
 */
 
-func (s GlyphStack) HasUpperPositionVowel() bool {
+func (s GraphemeStack) HasUpperPositionVowel() bool {
 	for _, r := range s.Runes {
 		if RuneIsUpperPositionVowel(r) {
 			return true
@@ -43,16 +43,16 @@ func (s GlyphStack) HasUpperPositionVowel() bool {
 	return false
 }
 
-type GlyphStackParser struct {
-	Chan chan *GlyphStack
+type GraphemeStackParser struct {
+	Chan chan *GraphemeStack
 	Wg   sync.WaitGroup
 }
 
-func ParseGlyphStacks(input string) []*GlyphStack {
-	var parser GlyphStackParser
+func ParseGraphemeStacks(input string) []*GraphemeStack {
+	var parser GraphemeStackParser
 	parser.GoParse(input)
 
-	gstacks := make([]*GlyphStack, 0, len(input))
+	gstacks := make([]*GraphemeStack, 0, len(input))
 	for g := range parser.Chan {
 		gstacks = append(gstacks, g)
 	}
@@ -61,15 +61,15 @@ func ParseGlyphStacks(input string) []*GlyphStack {
 	return gstacks
 }
 
-func (s *GlyphStackParser) GoParse(input string) {
-	s.Chan = make(chan *GlyphStack)
+func (s *GraphemeStackParser) GoParse(input string) {
+	s.Chan = make(chan *GraphemeStack)
 
 	normalizedInput := norm.NFD.String(input)
 	s.Wg.Add(1)
 	go s.parse(normalizedInput)
 }
 
-func (s *GlyphStackParser) parse(input string) {
+func (s *GraphemeStackParser) parse(input string) {
 	defer close(s.Chan)
 	defer s.Wg.Done()
 
@@ -99,7 +99,7 @@ func (s *GlyphStackParser) parse(input string) {
 			}
 		}
 
-		s.Chan <- &GlyphStack{
+		s.Chan <- &GraphemeStack{
 			Runes: []rune(input[i : i+d]),
 		}
 		i += d

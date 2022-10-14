@@ -9,13 +9,13 @@ func (s *MySuite) TestCCCase01(c *C) {
 	rnames := []rune{THAI_CHARACTER_KO_KAI, THAI_CHARACTER_RO_RUA, THAI_CHARACTER_RO_RUA, THAI_CHARACTER_MO_MA}
 	input := string(rnames)
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(gstacks, HasLen, 4)
 	/*
-		ccs := ParseCharacterClustersFromGlyphStacks(gstacks)
+		ccs := ParseGStackClustersFromGraphemeStacks(gstacks)
 		c.Assert(ccs, HasLen, 1)
 
-		var cc *CharacterCluster
+		var cc *GStackCluster
 		cc = ccs[0]
 		c.Check(cc.IsThai, Equals, true)
 		c.Check(cc.IsValidThai, Equals, true)
@@ -35,10 +35,10 @@ func (s *MySuite) TestCC01(c *C) {
 
 	// THAI_CHARACTER_KO_KAI, THAI_CHARACTER_MAITAIKHU
 	input := "ก็"
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 1)
 
-	ccs := ParseCharacterClustersFromGlyphStacks(gstacks)
+	ccs := ParseGStackClustersFromGraphemeStacks(gstacks)
 	c.Assert(len(ccs), Equals, 1)
 
 	cc := ccs[0]
@@ -54,10 +54,10 @@ func (s *MySuite) TestCC02(c *C) {
 	input := "อึ"
 	//fmt.Println(StringToRuneNames(input))
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 1)
 
-	ccs := ParseCharacterClustersFromGlyphStacks(gstacks)
+	ccs := ParseGStackClustersFromGraphemeStacks(gstacks)
 	c.Assert(len(ccs), Equals, 1)
 
 	cc := ccs[0]

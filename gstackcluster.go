@@ -28,22 +28,22 @@ var ConsonantsAllowedAfterHoHip = []rune{
 	'ย', 'ร', 'ล', 'ว',
 }
 
-type CharacterCluster struct {
+type GStackCluster struct {
 	Text string
 
 	IsThai        bool
 	IsValidThai   bool
 	InvalidReason string
 
-	SingleMidSign  GlyphStack
-	FrontVowel     GlyphStack
-	FirstConsonant GlyphStack
+	SingleMidSign  GraphemeStack
+	FrontVowel     GraphemeStack
+	FirstConsonant GraphemeStack
 	// The Tail might contain consontants and vowels,
 	// only consonants, or only vowels.
-	Tail []GlyphStack
+	Tail []GraphemeStack
 }
 
-func (s *CharacterCluster) Repr() string {
+func (s *GStackCluster) Repr() string {
 	if s.IsThai {
 		if s.IsValidThai {
 			if len(s.SingleMidSign.Runes) > 0 {
@@ -73,9 +73,9 @@ func (s *CharacterCluster) Repr() string {
 
 /*
 // A consonant that can appear in the first position
-var FirstConsonant = &ObjParserClass[*GlyphStack]{
+var FirstConsonant = &ObjParserClass[*GraphemeStack]{
 	"FirstConsonant",
-	func(g *GlyphStack) bool {
+	func(g *GraphemeStack) bool {
 		gr := g.Runes[0]
 		if !RuneIsConsonant(gr) {
 			return false
@@ -95,7 +95,7 @@ var RuleCRRC = &ObjParserPattern[*CC]{
     "FirstConsonant RoRua{2} FinalConsonant"
 }
 
-var parser = NewObjParser[*GlyphStack]()
+var parser = NewObjParser[*GraphemeStack]()
 
 func init() {
 	parser.Initialize()
@@ -112,27 +112,27 @@ func init() {
 */
 
 /*
-func (s *CharacterCluster) HasFrontVowel() bool {
+func (s *GStackCluster) HasFrontVowel() bool {
 	return len(s.FrontVowel.Runes) > 0
 }
 
-type CharacterClusterParser struct {
-	Chan chan *CharacterCluster
+type GStackClusterParser struct {
+	Chan chan *GStackCluster
 	Wg   sync.WaitGroup
 
-	input []*GlyphStack
+	input []*GraphemeStack
 	pos   int
-	cc    *CharacterCluster
+	cc    *GStackCluster
 }
 */
 /*
-func ParseCharacterClusters(input string) []*CharacterCluster {
-	glyphStacks := ParseGlyphStacks(input)
-	return ParseCharacterClustersFromGlyphStacks(glyphStacks)
+func ParseGStackClusters(input string) []*GStackCluster {
+	glyphStacks := ParseGraphemeStacks(input)
+	return ParseGStackClustersFromGraphemeStacks(glyphStacks)
 }
 
-func ParseCharacterClustersFromGlyphStacks(input []*GlyphStack) []*CharacterCluster {
-	var parser CharacterClusterParser
+func ParseGStackClustersFromGraphemeStacks(input []*GraphemeStack) []*GStackCluster {
+	var parser GStackClusterParser
 	parser.GoParse(input)
 
 	// 4 is just a guess right now; it has not been checked
@@ -141,7 +141,7 @@ func ParseCharacterClustersFromGlyphStacks(input []*GlyphStack) []*CharacterClus
 		estimatedAllocation = 1
 	}
 
-	clusters := make([]*CharacterCluster, 0, estimatedAllocation)
+	clusters := make([]*GStackCluster, 0, estimatedAllocation)
 	for c := range parser.Chan {
 		clusters = append(clusters, c)
 	}
@@ -150,8 +150,8 @@ func ParseCharacterClustersFromGlyphStacks(input []*GlyphStack) []*CharacterClus
 	return clusters
 }
 
-func (s *CharacterClusterParser) GoParse(input []*GlyphStack) {
-	s.Chan = make(chan *CharacterCluster)
+func (s *GStackClusterParser) GoParse(input []*GraphemeStack) {
+	s.Chan = make(chan *GStackCluster)
 	s.input = input
 	s.pos = 0
 	s.cc = nil
@@ -163,7 +163,7 @@ func (s *CharacterClusterParser) GoParse(input []*GlyphStack) {
 
 type stateFunc func() stateFunc
 
-func (s *CharacterClusterParser) parse(input []*GlyphStack) {
+func (s *GStackClusterParser) parse(input []*GraphemeStack) {
 	defer close(s.Chan)
 	defer s.Wg.Done()
 
@@ -192,8 +192,8 @@ func (s *CharacterClusterParser) parse(input []*GlyphStack) {
 /*
 }
 
-// Start a new CharacterCluster
-func (s *CharacterClusterParser) parseNew() stateFunc {
+// Start a new GStackCluster
+func (s *GStackClusterParser) parseNew() stateFunc {
 	if s.cc != nil {
 		s.Chan <- cc
 		cc = nil
@@ -204,7 +204,7 @@ func (s *CharacterClusterParser) parseNew() stateFunc {
 		return nil
 	}
 
-	s.cc = new(CharacterCluster)
+	s.cc = new(GStackCluster)
 	gs := input[s.pos]
 
 	if gs.IsThai() {
@@ -215,7 +215,7 @@ func (s *CharacterClusterParser) parseNew() stateFunc {
 }
 
 // The first glyph is not Thai
-func (s *CharacterClusterParser) parseNewNonThai() stateFunc {
+func (s *GStackClusterParser) parseNewNonThai() stateFunc {
 	gs := input[s.pos]
 	s.ccText = string(gs.Runes)
 	s.cc.IsThai = false
@@ -225,8 +225,8 @@ func (s *CharacterClusterParser) parseNewNonThai() stateFunc {
 }
 
 // The first glyph is Thai
-func (s *CharacterClusterParser) parseNewThai() stateFunc {
-	// This is a Thai GlyphStack
+func (s *GStackClusterParser) parseNewThai() stateFunc {
+	// This is a Thai GraphemeStack
 	s.cc.IsThai = true
 
 	gs := input[s.pos]
@@ -238,7 +238,7 @@ func (s *CharacterClusterParser) parseNewThai() stateFunc {
 	}
 }
 
-func (s *CharacterClusterParser) invalidateOverLength() bool {
+func (s *GStackClusterParser) invalidateOverLength() bool {
 	if s.pos > len(s.input) {
 		s.cc.InvalidThai = true
 		return true
@@ -246,8 +246,8 @@ func (s *CharacterClusterParser) invalidateOverLength() bool {
 	return false
 }
 
-// If the first GlyphStack has 1 runes in it, then it could be anything.
-func (s *CharacterClusterParser) parseNewThaiFirstGlyph1Rune() stateFunc {
+// If the first GraphemeStack has 1 runes in it, then it could be anything.
+func (s *GStackClusterParser) parseNewThaiFirstGlyph1Rune() stateFunc {
 	gs := input[s.pos]
 	if RuneIsFrontPositionVowel(gs.Runes[0]) {
 		s.cc.FrontVowel = *gs
@@ -288,18 +288,18 @@ func (s *CharacterClusterParser) parseNewThaiFirstGlyph1Rune() stateFunc {
 	}
 }
 
-// If the first GlyphStack has multiple runes in it, then it must be a
+// If the first GraphemeStack has multiple runes in it, then it must be a
 // consonant
-func (s *CharacterClusterParser) parseNewThaiFirstGlyphManyRunes() stateFunc {
+func (s *GStackClusterParser) parseNewThaiFirstGlyphManyRunes() stateFunc {
 	gs := input[s.pos]
-	// More than one rune in the GlyphStack?
-	// A GlyphStack with >1 rune at the beinning of a
-	// CharacterCluster *must* start with at
+	// More than one rune in the GraphemeStack?
+	// A GraphemeStack with >1 rune at the beinning of a
+	// GStackCluster *must* start with at
 	// consonant
 	if RuneIsConsonant(gs.Runes[0]) {
 		s.cc.FirstConsonant = *gs
 		// The next glyphs will be vowels
-		// and/or tone marks. The GlyphStack
+		// and/or tone marks. The GraphemeStack
 		// parser assures it.
 		s.pos++
 		// Don't check for HO_HIP or O_ANG here; if they are seen here
@@ -316,7 +316,7 @@ func (s *CharacterClusterParser) parseNewThaiFirstGlyphManyRunes() stateFunc {
 }
 
 // After a front vowel, we expect a consonant
-func (s *CharacterClusterParser) parseAfterFrontVowel() stateFunc {
+func (s *GStackClusterParser) parseAfterFrontVowel() stateFunc {
 	gs := input[s.pos]
 	if RuneIsConsonant(gs.Runes[0]) {
 		s.cc.FirstConsonant = *gs

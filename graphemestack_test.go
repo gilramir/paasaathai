@@ -10,14 +10,14 @@ const (
 )
 
 // Find 3 individual Thai characters
-func (s *MySuite) TestGlyphStack01(c *C) {
+func (s *MySuite) TestGraphemeStack01(c *C) {
 
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_CHO_CHAN
 	// [used with another verb to indicate possibility] may; might
 	input := "อาจ"
 	c.Assert(len([]rune(input)), Equals, 3)
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 3)
 
 	c.Check(len(gstacks[0].Runes), Equals, 1)
@@ -26,13 +26,13 @@ func (s *MySuite) TestGlyphStack01(c *C) {
 }
 
 // Find a mix of Latin and Thai characters
-func (s *MySuite) TestGlyphStack02(c *C) {
+func (s *MySuite) TestGraphemeStack02(c *C) {
 
 	// a, THAI_CHARACTER_O_ANG, b, THAI_CHARACTER_SARA_AA, c, THAI_CHARACTER_CHO_CHAN
 	input := "aอbาcจ"
 	c.Assert(len([]rune(input)), Equals, 6)
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 6)
 
 	c.Check(len(gstacks[0].Runes), Equals, 1)
@@ -46,11 +46,11 @@ func (s *MySuite) TestGlyphStack02(c *C) {
 // Handle a mistake in Thai orthography, but allowed in Unicode.
 // It's a vowel above the front vowel which is wrong. It may not
 // display correctly in your editor.
-func (s *MySuite) TestGlyphStack03(c *C) {
+func (s *MySuite) TestGraphemeStack03(c *C) {
 	input := ThaiError1
 	c.Assert(len([]rune(input)), Equals, 5)
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 5)
 
 	c.Check(len(gstacks[0].Runes), Equals, 1)
@@ -62,7 +62,7 @@ func (s *MySuite) TestGlyphStack03(c *C) {
 }
 
 // Handle a 2-codepoint stack
-func (s *MySuite) TestGlyphStack04(c *C) {
+func (s *MySuite) TestGraphemeStack04(c *C) {
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_MAI_THO, THAI_CHARACTER_SARA_AA,
 	// THAI_CHARACTER_NGO_NGU
 	// "to claim; claim that"
@@ -70,7 +70,7 @@ func (s *MySuite) TestGlyphStack04(c *C) {
 
 	c.Assert(len([]rune(input)), Equals, 4)
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 3)
 
 	c.Check(len(gstacks[0].Runes), Equals, 2)
@@ -82,7 +82,7 @@ func (s *MySuite) TestGlyphStack04(c *C) {
 }
 
 // Handle a 3-codepoint stack
-func (s *MySuite) TestGlyphStack05(c *C) {
+func (s *MySuite) TestGraphemeStack05(c *C) {
 	// This may not display properly in your editor
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_YO_YAK, THAI_CHARACTER_SARA_UU,
 	// THAI_CHARACTER_MAI_EK
@@ -91,7 +91,7 @@ func (s *MySuite) TestGlyphStack05(c *C) {
 	input := "อยู่"
 	c.Assert(len([]rune(input)), Equals, 4)
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 2)
 
 	c.Check(len(gstacks[0].Runes), Equals, 1)
@@ -99,7 +99,7 @@ func (s *MySuite) TestGlyphStack05(c *C) {
 }
 
 // Handle a SARA_AM
-func (s *MySuite) TestGlyphStack06(c *C) {
+func (s *MySuite) TestGraphemeStack06(c *C) {
 	// This may not display properly in your editor
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_BO_BAIMAI,
 	// THAI_CHARACTER_NO_NU, THAI_CHARACTER_MAI_THO, THAI_CHARACTER_SARA_AM
@@ -109,7 +109,7 @@ func (s *MySuite) TestGlyphStack06(c *C) {
 
 	c.Assert(len([]rune(input)), Equals, 6)
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 5)
 
 	c.Check(len(gstacks[0].Runes), Equals, 1)
@@ -120,24 +120,24 @@ func (s *MySuite) TestGlyphStack06(c *C) {
 }
 
 // Handle "ก็"
-func (s *MySuite) TestGlyphStack07(c *C) {
+func (s *MySuite) TestGraphemeStack07(c *C) {
 	// THAI_CHARACTER_KO_KAI, THAI_CHARACTER_MAITAIKHU
 	input := "ก็"
 	c.Assert(len([]rune(input)), Equals, 2)
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 1)
 
 	c.Check(len(gstacks[0].Runes), Equals, 2)
 }
 
 // Handle "อึ"
-func (s *MySuite) TestGlyphStack08(c *C) {
+func (s *MySuite) TestGraphemeStack08(c *C) {
 	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_UE
 	input := "อึ"
 	c.Assert(len([]rune(input)), Equals, 2)
 
-	gstacks := ParseGlyphStacks(input)
+	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 1)
 
 	c.Check(len(gstacks[0].Runes), Equals, 2)
