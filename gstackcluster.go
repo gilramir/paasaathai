@@ -101,6 +101,7 @@ type GStackClusterParser struct {
 	re_single_consonant  *objregexp.Regexp[GraphemeStack]
 	re_final_pos_short_1 *objregexp.Regexp[GraphemeStack]
 	re_final_pos_long_1  *objregexp.Regexp[GraphemeStack]
+	re_sara_am           *objregexp.Regexp[GraphemeStack]
 }
 
 func (s *GStackClusterParser) Initialize() {
@@ -148,6 +149,10 @@ func (s *GStackClusterParser) Initialize() {
 		MustParseSingleGraphemeStack(
 			string(THAI_CHARACTER_SARA_AA)))
 
+	s.compiler.AddIdentity("sara_am",
+		MustParseSingleGraphemeStack(
+			string(THAI_CHARACTER_SARA_AM)))
+
 	s.compiler.AddIdentity("o_ang",
 		MustParseSingleGraphemeStack(
 			string(THAI_CHARACTER_O_ANG)))
@@ -171,6 +176,10 @@ func (s *GStackClusterParser) Initialize() {
 	text = "([:consonant-no-diacritic-vowel:]) ([:sliding-consonant:])? " +
 		"([:sara_aa:] | [:o_ang:])"
 	s.re_final_pos_long_1 = s.compiler.MustCompile(text)
+
+	// SARA_AM... can this be combined with re_final_pos_long_1 ?
+	text = "([:consonant-no-diacritic-vowel:]) ([:sara_am:])"
+	s.re_sara_am = s.compiler.MustCompile(text)
 
 	// Consonant Vowel patterns not found from the re_final_pos*
 	// regexes
@@ -223,8 +232,13 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 			// check long vowels which indicate the end of the
 			// cluster
 			s.ck_final_pos_long_1(input, i, &length, &c) ||
+
+			// C + SARA_AM
+			s.ck_sara_am(input, i, &length, &c) ||
+
 			// Just a gaaw?
 			s.ck_gaaw(input, i, &length, &c) ||
+
 			// Just a single consonant?
 			s.ck_single_consonant(input, i, &length, &c) {
 
@@ -241,11 +255,11 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 	return clusters
 }
 
+// Check for final position short vowel patterns
+// "([:sara_e:] | [:sara_ae:] | [:sara_o:])? " +
+// "([:consonant-no-diacritic-vowel:] ([:sliding-consonant:]?) " +
+// "([:sara_a:])"
 func (s *GStackClusterParser) ck_final_pos_short_1(input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
-	// Check for final position short vowel patterns
-	// "([:sara_e:] | [:sara_ae:] | [:sara_o:])? " +
-	// "([:consonant-no-diacritic-vowel:] ([:sliding-consonant:]?) " +
-	// "([:sara_a:])"
 
 	m := s.re_final_pos_short_1.MatchAt(input, i)
 	if !m.Success {
@@ -272,10 +286,10 @@ func (s *GStackClusterParser) ck_final_pos_short_1(input []GraphemeStack, i int,
 	return true
 }
 
+// check for final position long vowel patterns
+//"([:consonant-no-diacritic-vowel:]) ([:sliding-consonant:])? " +
+//		"([:sara_aa:] | [:o_ang:])"
 func (s *GStackClusterParser) ck_final_pos_long_1(input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
-	// check for final position long vowel patterns
-	//"([:consonant-no-diacritic-vowel:]) ([:sliding-consonant:])? " +
-	//		"([:sara_aa:] | [:o_ang:])"
 	m := s.re_final_pos_long_1.MatchAt(input, i)
 	if !m.Success {
 		return false
@@ -290,6 +304,24 @@ func (s *GStackClusterParser) ck_final_pos_long_1(input []GraphemeStack, i int, 
 	}
 	reg3 := m.Register(3)
 	c.Tail = append(c.Tail, input[reg3.Start:reg3.End]...)
+
+	*length = m.Length()
+	return true
+}
+
+// check for C + SARA_AM
+// "([:consonant-no-diacritic-vowel:]) ([:sara_am:])"
+func (s *GStackClusterParser) ck_sara_am(input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+	m := s.re_sara_am.MatchAt(input, i)
+	if !m.Success {
+		return false
+	}
+	*c = makeCluster(input[i : i+2])
+	reg1 := m.Register(1)
+	c.FirstConsonant = input[reg1.Start]
+
+	reg2 := m.Register(2)
+	c.Tail = append(c.Tail, input[reg2.Start])
 
 	*length = m.Length()
 	return true
