@@ -1,3 +1,5 @@
+github.com/gilramir/objregexp v0.0.0-20221015093614-504b319e9a6d h1:PmkRq4bsDJvGauAON36ivEVerGMpoecZ5QtMXJVw1Qo=
+github.com/gilramir/objregexp v0.0.0-20221015093614-504b319e9a6d/go.mod h1:H1mdG0UZp948eW/7WXPBDz/jO0J5GzfSaGlnfczTLMM=
 github.com/kr/pretty v0.2.1 h1:Fmg33tUaq4/8ym9TJN1x7sLJnHVwhP33CNkpYV/7rwI=
 github.com/kr/pretty v0.2.1/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=

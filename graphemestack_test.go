@@ -4,11 +4,6 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-const (
-	// THAI_CHARACTER_SARA_E, THAI_CHARACTER_SARA_E, THAI_CHARACTER_SARA_II, THAI_CHARACTER_YO_YAK, THAI_CHARACTER_WO_WAE
-	ThaiError1 = "เเียว"
-)
-
 // Find 3 individual Thai characters
 func (s *MySuite) TestGraphemeStack01(c *C) {
 
@@ -20,9 +15,9 @@ func (s *MySuite) TestGraphemeStack01(c *C) {
 	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 3)
 
-	c.Check(len(gstacks[0].Runes), Equals, 1)
-	c.Check(len(gstacks[1].Runes), Equals, 1)
-	c.Check(len(gstacks[2].Runes), Equals, 1)
+	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gstacks[2].Main, Equals, THAI_CHARACTER_CHO_CHAN)
 }
 
 // Find a mix of Latin and Thai characters
@@ -35,29 +30,34 @@ func (s *MySuite) TestGraphemeStack02(c *C) {
 	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 6)
 
-	c.Check(len(gstacks[0].Runes), Equals, 1)
-	c.Check(len(gstacks[1].Runes), Equals, 1)
-	c.Check(len(gstacks[2].Runes), Equals, 1)
-	c.Check(len(gstacks[3].Runes), Equals, 1)
-	c.Check(len(gstacks[4].Runes), Equals, 1)
-	c.Check(len(gstacks[5].Runes), Equals, 1)
+	c.Check(gstacks[0].Main, Equals, 'a')
+	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gstacks[2].Main, Equals, 'b')
+	c.Check(gstacks[3].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gstacks[4].Main, Equals, 'c')
+	c.Check(gstacks[5].Main, Equals, THAI_CHARACTER_CHO_CHAN)
 }
 
 // Handle a mistake in Thai orthography, but allowed in Unicode.
 // It's a vowel above the front vowel which is wrong. It may not
 // display correctly in your editor.
 func (s *MySuite) TestGraphemeStack03(c *C) {
-	input := ThaiError1
+
+	// THAI_CHARACTER_SARA_E, THAI_CHARACTER_SARA_E,
+	// THAI_CHARACTER_SARA_II, THAI_CHARACTER_YO_YAK,
+	// THAI_CHARACTER_WO_WAEN
+	input := "เเียว"
+
 	c.Assert(len([]rune(input)), Equals, 5)
 
 	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 5)
 
-	c.Check(len(gstacks[0].Runes), Equals, 1)
-	c.Check(len(gstacks[1].Runes), Equals, 1)
-	c.Check(len(gstacks[2].Runes), Equals, 1)
-	c.Check(len(gstacks[3].Runes), Equals, 1)
-	c.Check(len(gstacks[4].Runes), Equals, 1)
+	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_SARA_E)
+	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_SARA_E)
+	c.Check(gstacks[2].Main, Equals, THAI_CHARACTER_SARA_II)
+	c.Check(gstacks[3].Main, Equals, THAI_CHARACTER_YO_YAK)
+	c.Check(gstacks[4].Main, Equals, THAI_CHARACTER_WO_WAEN)
 
 }
 
@@ -73,12 +73,10 @@ func (s *MySuite) TestGraphemeStack04(c *C) {
 	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 3)
 
-	c.Check(len(gstacks[0].Runes), Equals, 2)
-	c.Check(len(gstacks[1].Runes), Equals, 1)
-	c.Check(len(gstacks[2].Runes), Equals, 1)
-
-	c.Check(gstacks[0].Runes[0], Equals, THAI_CHARACTER_O_ANG)
-	c.Check(gstacks[0].Runes[1], Equals, THAI_CHARACTER_MAI_THO)
+	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gstacks[0].UpperDiacritic, Equals, THAI_CHARACTER_MAI_THO)
+	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gstacks[2].Main, Equals, THAI_CHARACTER_NGO_NGU)
 }
 
 // Handle a 3-codepoint stack
@@ -94,8 +92,10 @@ func (s *MySuite) TestGraphemeStack05(c *C) {
 	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 2)
 
-	c.Check(len(gstacks[0].Runes), Equals, 1)
-	c.Check(len(gstacks[1].Runes), Equals, 3)
+	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_YO_YAK)
+	c.Check(gstacks[1].DiacriticVowel, Equals, THAI_CHARACTER_SARA_UU)
+	c.Check(gstacks[1].UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
 }
 
 // Handle a SARA_AM
@@ -112,11 +112,13 @@ func (s *MySuite) TestGraphemeStack06(c *C) {
 	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 5)
 
-	c.Check(len(gstacks[0].Runes), Equals, 1)
-	c.Check(len(gstacks[1].Runes), Equals, 1)
-	c.Check(len(gstacks[2].Runes), Equals, 1)
-	c.Check(len(gstacks[3].Runes), Equals, 2)
-	c.Check(len(gstacks[4].Runes), Equals, 1)
+	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gstacks[2].Main, Equals, THAI_CHARACTER_BO_BAIMAI)
+	c.Check(gstacks[3].Main, Equals, THAI_CHARACTER_NO_NU)
+	c.Check(gstacks[3].UpperDiacritic, Equals, THAI_CHARACTER_MAI_THO)
+	c.Check(gstacks[4].Main, Equals, THAI_CHARACTER_SARA_AM)
+
 }
 
 // Handle "ก็"
@@ -128,7 +130,8 @@ func (s *MySuite) TestGraphemeStack07(c *C) {
 	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 1)
 
-	c.Check(len(gstacks[0].Runes), Equals, 2)
+	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_KO_KAI)
+	c.Check(gstacks[0].DiacriticVowel, Equals, THAI_CHARACTER_MAITAIKHU)
 }
 
 // Handle "อึ"
@@ -140,5 +143,6 @@ func (s *MySuite) TestGraphemeStack08(c *C) {
 	gstacks := ParseGraphemeStacks(input)
 	c.Assert(len(gstacks), Equals, 1)
 
-	c.Check(len(gstacks[0].Runes), Equals, 2)
+	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gstacks[0].DiacriticVowel, Equals, THAI_CHARACTER_SARA_UE)
 }

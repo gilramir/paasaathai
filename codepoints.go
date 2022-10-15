@@ -57,6 +57,16 @@ func RuneNamesToString(names []string) (string, error) {
 	return answer, nil
 }
 
+func RuneToName(r rune) string {
+	n, _ := RuneToThaiName[r]
+	return n
+}
+
+func NameToRune(name string) rune {
+	r, _ := ThaiNameToRune[name]
+	return r
+}
+
 // THAI_CHARACTER_O_ANG is considered a consonant here (in Thai it also acts
 // like a vowel)
 // THAI_CHARACTER_RU and THAI_CHARACTER_LU are also considered consonants
@@ -78,7 +88,8 @@ func RuneIsUpperPosition(r rune) bool {
 }
 
 // We don't consider THAI_CHARACTER_SARA_AM to be upper; we call it mid
-// We do consider THAI_CHARACTER_MAITAIKHU to be an upper vowel
+// We do consider THAI_CHARACTER_MAITAIKHU to be an upper vowel, since Unicode
+// does.
 func RuneIsUpperPositionVowel(r rune) bool {
 	return r == THAI_CHARACTER_MAI_HAN_AKAT ||
 		r == THAI_CHARACTER_SARA_I ||
@@ -131,9 +142,9 @@ func RuneIsSign(r rune) bool {
 }
 
 func RuneIsUpperPositionSign(r rune) bool {
-	return r == THAI_CHARACTER_THANTHAKHAT ||
-		r == THAI_CHARACTER_NIKHAHIT ||
-		r == THAI_CHARACTER_YAMAKKAN
+	return r == THAI_CHARACTER_THANTHAKHAT || // used in Thai
+		r == THAI_CHARACTER_NIKHAHIT || // used in Sanskrit?
+		r == THAI_CHARACTER_YAMAKKAN // used where?
 }
 
 func RuneIsMidPositionSign(r rune) bool {

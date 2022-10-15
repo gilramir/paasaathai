@@ -1,6 +1,7 @@
 package paasaathai
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"unicode/utf8"
@@ -8,31 +9,64 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-// Represents one vertical stack of characters that fit into one horizontal
-// character box, according to Unicode glyphs. It is generic for Unicode, not
-// Thai-specific. But, there are Thai-specific methods for investigating it.
+var DiacriticVowelWithoutConsonantError = errors.New("An upper/lower diacritic vowel should be connected to a consonant")
+var DiacriticWithoutConsonantError = errors.New("An upper diacritic should be connected to a consonant")
+
+// For Thai code points, represents one vertical stack of Unicode codepoints
+// that fit into one horizontal user-perceived character box.
+// It can hold a single non-Thai code point instead of Thai code points.
+// TODO - this is going to change over time as I decide how I want to store the
+// info.
 type GraphemeStack struct {
-	Runes []rune
+	// The original UTF-8
+	Text string
+
+	// This one is always set, for Thai or non-Thai
+	Main rune
+
+	// For Thai, these might be set
+	DiacriticVowel rune
+	UpperDiacritic rune
 }
 
 // Implements the fmt.Stringer interface
-func (s *GraphemeStack) String() string {
-	return string(s.Runes)
+func (s GraphemeStack) String() string {
+	return s.Text
 }
 
-func (s *GraphemeStack) Repr() string {
-	return fmt.Sprintf("<GraphemeStack %s %s>", string(s.Runes), StringToRuneNames(string(s.Runes)))
+func (s GraphemeStack) Repr() string {
+	labels := ""
+	if s.Main != 0 {
+		labels += fmt.Sprintf("MAIN=%s", RuneToName(s.Main))
+	}
+	if s.DiacriticVowel != 0 {
+		if labels != "" {
+			labels += " "
+		}
+		labels += fmt.Sprintf("DV=%s", RuneToName(s.DiacriticVowel))
+	}
+	if s.UpperDiacritic != 0 {
+		if labels != "" {
+			labels += " "
+		}
+		labels += fmt.Sprintf("UD=%s", RuneToName(s.UpperDiacritic))
+	}
+
+	return fmt.Sprintf("<GraphemeStack %s %s>", s.Text, labels)
 }
 
 func (s GraphemeStack) IsThai() bool {
-	return RuneIsThai(s.Runes[0])
+	return RuneIsThai(s.Main)
+}
+
+func (s GraphemeStack) IsValidThai() bool {
+	return s.Main != 0 && RuneIsThai(s.Main)
 }
 
 /*
 func (s GraphemeStack) StartsWithConsonant() bool {
 	return RuneIsConsonant(s.Runes[0])
 }
-*/
 
 func (s GraphemeStack) HasUpperPositionVowel() bool {
 	for _, r := range s.Runes {
@@ -42,17 +76,27 @@ func (s GraphemeStack) HasUpperPositionVowel() bool {
 	}
 	return false
 }
+*/
+
+func MustParseSingleGraphemeStack(input string) GraphemeStack {
+
+	gstacks := ParseGraphemeStacks(input)
+	if len(gstacks) != 1 {
+		panic(fmt.Sprintf("The input string resulted in %d GraphemeStacks", len(gstacks)))
+	}
+	return gstacks[0]
+}
 
 type GraphemeStackParser struct {
-	Chan chan *GraphemeStack
+	Chan chan GraphemeStack
 	Wg   sync.WaitGroup
 }
 
-func ParseGraphemeStacks(input string) []*GraphemeStack {
+func ParseGraphemeStacks(input string) []GraphemeStack {
 	var parser GraphemeStackParser
 	parser.GoParse(input)
 
-	gstacks := make([]*GraphemeStack, 0, len(input))
+	gstacks := make([]GraphemeStack, 0, len(input))
 	for g := range parser.Chan {
 		gstacks = append(gstacks, g)
 	}
@@ -62,9 +106,9 @@ func ParseGraphemeStacks(input string) []*GraphemeStack {
 }
 
 func (s *GraphemeStackParser) GoParse(input string) {
-	s.Chan = make(chan *GraphemeStack)
+	s.Chan = make(chan GraphemeStack)
 
-	normalizedInput := norm.NFD.String(input)
+	normalizedInput := norm.NFC.String(input)
 	s.Wg.Add(1)
 	go s.parse(normalizedInput)
 }
@@ -79,29 +123,70 @@ func (s *GraphemeStackParser) parse(input string) {
 		// the way we need it to. Implement it ourselves.
 		r1, r1sz := utf8.DecodeRuneInString(input[i:])
 
-		// How many bytes have we decoded
-		d := r1sz
+		// How many UTF-8 bytes have we decoded?
+		decodedBytes := r1sz
 
-		// Need 3 bytes to encode a Thai glyph in UTF-8; do we have
-		// enough for another codepoint?
-		if RuneIsConsonant(r1) && len(input)-(i+d) >= 3 {
-			r2, r2sz := utf8.DecodeRuneInString(input[i+d:])
-			if RuneIsUpperPosition(r2) || RuneIsLowerPositionVowel(r2) {
-				d += r2sz
+		gs := GraphemeStack{
+			Main: r1,
+		}
+		// Not Thai? Next!
+		if !RuneIsThai(r1) {
+			gs.Text = input[i : i+decodedBytes]
+			s.Chan <- gs
+			i += decodedBytes
+			continue
+		}
+
+		// If this Thai rune could have a diacritic on it, check.
+		// A Thai code point needs 3 bytes to be encoded in UTF-8; do we have
+		// enough for another code point?
+		if RuneIsConsonant(r1) && len(input)-(i+decodedBytes) >= 3 {
+			r2, r2sz := utf8.DecodeRuneInString(input[i+decodedBytes:])
+			// Not Thai? Next!
+			if !RuneIsThai(r2) {
+				gs.Text = input[i : i+decodedBytes]
+				s.Chan <- gs
+				i += decodedBytes
+				continue
 			}
 
+			if RuneIsUpperPositionVowel(r2) || RuneIsLowerPositionVowel(r2) {
+				decodedBytes += r2sz
+				gs.DiacriticVowel = r2
+			} else if RuneIsToneMark(r2) || RuneIsUpperPositionSign(r2) {
+				decodedBytes += r2sz
+				gs.UpperDiacritic = r2
+				// This GraphemeStack is only made of 2 code
+				// points, because nothing can follow the
+				// UpperDiacritic
+				gs.Text = input[i : i+decodedBytes]
+				s.Chan <- gs
+				i += decodedBytes
+				continue
+			} else {
+				// This GraphemeStack is only made of one code
+				// point, because r2 cannot be stacked
+				// over/under r1
+				gs.Text = input[i : i+decodedBytes]
+				s.Chan <- gs
+				i += decodedBytes
+				continue
+			}
+
+			// We have 2 code points. Is there a third?
 			// An upper or lower vowel can still take a tone mark
-			if (RuneIsLowerPositionVowel(r2) || RuneIsUpperPositionVowel(r2)) && len(input)-(i+d) >= 3 {
-				r3, r3sz := utf8.DecodeRuneInString(input[i+d:])
-				if RuneIsToneMark(r3) {
-					d += r3sz
+			// or other upper diacritic
+			if (RuneIsLowerPositionVowel(r2) || RuneIsUpperPositionVowel(r2)) && len(input)-(i+decodedBytes) >= 3 {
+				r3, r3sz := utf8.DecodeRuneInString(input[i+decodedBytes:])
+				if RuneIsToneMark(r3) || RuneIsUpperPositionSign(r3) {
+					decodedBytes += r3sz
+					gs.UpperDiacritic = r3
 				}
 			}
 		}
-
-		s.Chan <- &GraphemeStack{
-			Runes: []rune(input[i : i+d]),
-		}
-		i += d
+		// At this point we have 2 or 3 code points.
+		gs.Text = input[i : i+decodedBytes]
+		s.Chan <- gs
+		i += decodedBytes
 	}
 }

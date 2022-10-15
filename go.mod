@@ -3,6 +3,7 @@ module github.com/gilramir/paasaathai
 go 1.19
 
 require (
+	github.com/gilramir/objregexp v0.0.0-20221015093614-504b319e9a6d // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/text v0.1.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
