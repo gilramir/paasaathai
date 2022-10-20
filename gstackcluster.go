@@ -96,13 +96,6 @@ func makeCluster(input []GraphemeStack) GStackCluster {
 
 type GStackClusterParser struct {
 	compiler objregexp.Compiler[GraphemeStack]
-
-	re_single_consonant  *objregexp.Regexp[GraphemeStack]
-	re_final_pos_short_1 *objregexp.Regexp[GraphemeStack]
-	re_final_pos_long_1  *objregexp.Regexp[GraphemeStack]
-	re_final_pos_long_2  *objregexp.Regexp[GraphemeStack]
-	re_sara_am           *objregexp.Regexp[GraphemeStack]
-	re_standalone_symbol *objregexp.Regexp[GraphemeStack]
 }
 
 type TccRule struct {
@@ -164,9 +157,19 @@ func (s *GStackClusterParser) Initialize() {
 			return RuneIsConsonant(gs.Main) && gs.DiacriticVowel == 0
 		})
 
+	s.compiler.MakeClass("consonant-with-maithaku",
+		func(gs GraphemeStack) bool {
+			return RuneIsConsonant(gs.Main) && gs.DiacriticVowel == THAI_CHARACTER_MAITAIKHU
+		})
+
 	s.compiler.MakeClass("sliding-consonant",
 		func(gs GraphemeStack) bool {
 			return GlidingConsonants.Has(gs.Main)
+		})
+
+	s.compiler.MakeClass("front-position-vowel",
+		func(gs GraphemeStack) bool {
+			return RuneIsFrontPositionVowel(gs.Main)
 		})
 
 	// regex identity classes
@@ -198,6 +201,10 @@ func (s *GStackClusterParser) Initialize() {
 		MustParseSingleGraphemeStack(
 			string(THAI_CHARACTER_O_ANG)))
 
+	s.compiler.AddIdentity("yo_yak",
+		MustParseSingleGraphemeStack(
+			string(THAI_CHARACTER_YO_YAK)))
+
 	s.compiler.AddIdentity("paiyannoi",
 		MustParseSingleGraphemeStack(
 			string(THAI_CHARACTER_PAIYANNOI)))
@@ -205,8 +212,11 @@ func (s *GStackClusterParser) Initialize() {
 	s.compiler.Finalize()
 
 	r_final_pos_short_1.CompileWith(&s.compiler)
+	r_final_pos_short_2.CompileWith(&s.compiler)
+	r_final_pos_short_3.CompileWith(&s.compiler)
 	r_final_pos_long_1.CompileWith(&s.compiler)
 	r_final_pos_long_2.CompileWith(&s.compiler)
+	r_final_pos_long_3.CompileWith(&s.compiler)
 	r_sara_am.CompileWith(&s.compiler)
 	r_standalone_symbol.CompileWith(&s.compiler)
 	r_gaaw.CompileWith(&s.compiler)
@@ -229,7 +239,10 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 
 	rules := []TccRule{
 		r_final_pos_short_1,
+		r_final_pos_short_2,
+		r_final_pos_short_3,
 		r_final_pos_long_1,
+		r_final_pos_long_3, // long_3 must come before long_2
 		r_final_pos_long_2,
 		r_sara_am,
 		r_standalone_symbol,
@@ -256,6 +269,7 @@ next_input:
 		for _, rule := range rules {
 			matched := rule.ck(&rule, input, i, &length, &c)
 			if matched {
+				fmt.Printf("matched: %s %s\n", rule.rs, c.Repr())
 				clusters = append(clusters, c)
 				i += length
 				continue next_input
@@ -302,6 +316,67 @@ var r_final_pos_short_1 = TccRule{
 	},
 }
 
+// Short vowel maithaku patterns
+var r_final_pos_short_2 = TccRule{
+	rs: "([:sara_e:] | [:sara_ae:] ) " +
+		"([:consonant-with-maithaku:]) ([:sliding-consonant:])? " +
+		"([:consonant-no-diacritic-vowel:])",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Register(1)
+		c.FrontVowel = input[reg1.Start]
+
+		reg2 := m.Register(2)
+		c.FirstConsonant = input[reg2.Start]
+
+		reg3 := m.Register(3)
+		if !reg3.Empty() {
+			c.Tail = append(c.Tail, input[reg3.Start:reg3.End]...)
+		}
+		reg4 := m.Register(4)
+		c.Tail = append(c.Tail, input[reg4.Start:reg4.End]...)
+
+		*length = m.Length()
+		return true
+	},
+}
+
+// Short vowel a/oh patterns
+var r_final_pos_short_3 = TccRule{
+	rs: "([:sara_e:]) " +
+		"([:consonant-no-diacritic-vowel:]) ([:sliding-consonant:])? " +
+		"([:sara_aa:]|[:o_ang:]) ([:sara_a:])",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Register(1)
+		c.FrontVowel = input[reg1.Start]
+
+		reg2 := m.Register(2)
+		c.FirstConsonant = input[reg2.Start]
+
+		reg3 := m.Register(3)
+		if !reg3.Empty() {
+			c.Tail = append(c.Tail, input[reg3.Start:reg3.End]...)
+		}
+		reg4 := m.Register(4)
+		c.Tail = append(c.Tail, input[reg4.Start:reg4.End]...)
+
+		reg5 := m.Register(5)
+		c.Tail = append(c.Tail, input[reg5.Start])
+
+		*length = m.Length()
+		return true
+	},
+}
+
 // Long vowel patterns; these must be checked after the short vowels
 var r_final_pos_long_1 = TccRule{
 	rs: "([:consonant-no-diacritic-vowel:]) ([:sliding-consonant:])? " +
@@ -328,8 +403,9 @@ var r_final_pos_long_1 = TccRule{
 }
 
 // Similar to re_final_pos_short_1, but no sara_a at the end
+// We allow all front-position vowels here
 var r_final_pos_long_2 = TccRule{
-	rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:]) " +
+	rs: "([:front-position-vowel:]) " +
 		"([:consonant-no-diacritic-vowel:]) ([:sliding-consonant:])?",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
@@ -348,6 +424,36 @@ var r_final_pos_long_2 = TccRule{
 			reg3 := m.Register(3)
 			c.Tail = append(c.Tail, input[reg3.Start])
 		}
+
+		*length = m.Length()
+		return true
+	},
+}
+
+// sara e + C + vowel sandwich
+var r_final_pos_long_3 = TccRule{
+	rs: "([:sara_e:]) " +
+		"([:consonant-no-diacritic-vowel:]) ([:sliding-consonant:])?" +
+		"([:sara_aa:] | [:o_ang:] | [:yo_yak:])",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+
+		reg1 := m.Register(1)
+		c.FrontVowel = input[reg1.Start]
+
+		reg2 := m.Register(2)
+		c.FirstConsonant = input[reg2.Start]
+
+		if m.HasRegister(3) {
+			reg3 := m.Register(3)
+			c.Tail = append(c.Tail, input[reg3.Start])
+		}
+		reg4 := m.Register(4)
+		c.Tail = append(c.Tail, input[reg4.Start])
 
 		*length = m.Length()
 		return true
