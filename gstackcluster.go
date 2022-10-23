@@ -112,7 +112,7 @@ type GStackClusterParser struct {
 #6		final_pos_short_1		final_pos_long_2
 #7		final_pos_short_1		final_pos_long_2
 #8		eu_o_ao				final_pos_long_1
-#9
+#9		ua				ua
 #10		ia				ia
 #11		uu_ua				uu_ua
 #12		eu_o_ao				eu_o_ao
@@ -179,10 +179,12 @@ var ConsonantsAllowedAfterHoHip = NewSetFromSlice([]rune{
 // "เฉพาะ"
 // "โบราณ"
 // "เพราะ"
+// "กว่า"
 var GlidingConsonants = NewSetFromSlice([]rune{
 	'ล',
 	THAI_CHARACTER_PHO_PHAN,
 	THAI_CHARACTER_RO_RUA,
+	THAI_CHARACTER_WO_WAEN,
 })
 
 func (s *GStackClusterParser) Initialize() {
@@ -272,6 +274,14 @@ func (s *GStackClusterParser) Initialize() {
 		MustParseSingleGraphemeStack(
 			string(THAI_CHARACTER_YO_YAK)))
 
+	s.compiler.AddIdentity("wo_waen",
+		MustParseSingleGraphemeStack(
+			string(THAI_CHARACTER_WO_WAEN)))
+
+	s.compiler.AddIdentity("ro_rua",
+		MustParseSingleGraphemeStack(
+			string(THAI_CHARACTER_RO_RUA)))
+
 	s.compiler.AddIdentity("paiyannoi",
 		MustParseSingleGraphemeStack(
 			string(THAI_CHARACTER_PAIYANNOI)))
@@ -291,6 +301,9 @@ func (s *GStackClusterParser) Initialize() {
 	r_uu_ua.CompileWith(&s.compiler)
 	r_c_sara_am.CompileWith(&s.compiler)
 	r_mai_han_akat.CompileWith(&s.compiler)
+	r_ua.CompileWith(&s.compiler)
+	r_medial_ua.CompileWith(&s.compiler)
+	r_rr.CompileWith(&s.compiler)
 	r_standalone_symbol.CompileWith(&s.compiler)
 	r_gaaw.CompileWith(&s.compiler)
 	r_single_consonant.CompileWith(&s.compiler)
@@ -321,6 +334,9 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_front_o,       // must come before long_2
 		r_final_pos_long_2,
 		r_ia,
+		r_ua,
+		r_medial_ua,
+		r_rr,
 		r_uu_ua,
 		r_c_sara_am,
 		r_mai_han_akat,
@@ -675,6 +691,69 @@ var r_ia = TccRule{
 		}
 		reg4 := m.Register(4)
 		c.Tail = append(c.Tail, input[reg4.Start:reg4.End]...)
+
+		*length = m.Length()
+		return true
+	},
+}
+
+// long or short ua
+var r_ua = TccRule{
+	rs: "([:consonant: && :has-mai-han-akat:]) ([:sliding-consonant:]? " +
+		"[:wo_waen:] [:sara_a:]?)",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Register(1)
+		c.FirstConsonant = input[reg1.Start]
+
+		reg2 := m.Register(2)
+		c.Tail = append(c.Tail, input[reg2.Start:reg2.End]...)
+
+		*length = m.Length()
+		return true
+	},
+}
+
+// medial_ua
+var r_medial_ua = TccRule{
+	rs: "([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:]? " +
+		"[:wo_waen:] [:consonant:])",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Register(1)
+		c.FirstConsonant = input[reg1.Start]
+
+		reg2 := m.Register(2)
+		c.Tail = append(c.Tail, input[reg2.Start:reg2.End]...)
+
+		*length = m.Length()
+		return true
+	},
+}
+
+// rr
+// "บทบรรณาธิการ"
+var r_rr = TccRule{
+	rs: "([:consonant:]) ([:ro_rua:][:ro_rua:])",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Register(1)
+		c.FirstConsonant = input[reg1.Start]
+
+		reg2 := m.Register(2)
+		c.Tail = append(c.Tail, input[reg2.Start:reg2.End]...)
 
 		*length = m.Length()
 		return true
