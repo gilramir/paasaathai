@@ -242,6 +242,11 @@ func (s *GStackClusterParser) Initialize() {
 			return RuneIsFrontPositionVowel(gs.Main)
 		})
 
+	s.compiler.MakeClass("mid-position-vowel",
+		func(gs GraphemeStack) bool {
+			return RuneIsMidPositionVowel(gs.Main)
+		})
+
 	// regex identity classes for all code points
 	for fullName, thaiRune := range ThaiNameToRune {
 		var name string
@@ -266,6 +271,7 @@ func (s *GStackClusterParser) Initialize() {
 	r_final_pos_short_3.CompileWith(&s.compiler)
 	r_front_o.CompileWith(&s.compiler)
 	r_final_pos_long_1.CompileWith(&s.compiler)
+	r_final_pos_long_2_o_ang.CompileWith(&s.compiler)
 	r_final_pos_long_2.CompileWith(&s.compiler)
 	r_final_pos_eei.CompileWith(&s.compiler)
 	r_eu_o_ao.CompileWith(&s.compiler)
@@ -307,9 +313,10 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_medial_sara_i,
 		r_final_pos_short_3,
 		r_final_pos_long_1,
-		r_eu_o_ao,       // must come before long_2
-		r_final_pos_eei, // eei must come before long_2
-		r_front_o,       // must come before long_2
+		r_eu_o_ao,                // must come before long_2
+		r_final_pos_eei,          // eei must come before long_2
+		r_front_o,                // must come before long_2
+		r_final_pos_long_2_o_ang, // must come before long_2
 		r_final_pos_long_2,
 		r_ia,
 		r_ua,
@@ -446,10 +453,37 @@ var r_final_pos_long_1 = TccRule{
 	},
 }
 
-// TEST
+// "โบราณ"
 var r_front_o = TccRule{
-	rs: "([:sara_o:]) " +
-		"([:consonant: && !:diacritic-vowel:])",
+	//	rs: "([:sara_o:]) " +
+	//		"([:consonant: && !:diacritic-vowel:])",
+	rs: "([:front-position-vowel:]) " +
+		"([:consonant: && !:o_ang: && !:diacritic-vowel:]) " +
+		"([:sliding-consonant: && :diacritic-vowel:] | " +
+		"([:sliding-consonant:][:mid-position-vowel:]))",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+
+		reg1 := m.Group(1)
+		reg2 := m.Group(2)
+
+		// We don't use the full length
+		partialLen := reg1.Length() + reg2.Length()
+		*c = makeCluster(input[i : i+partialLen])
+
+		c.FirstConsonant = input[reg2.Start]
+
+		*length = partialLen
+		return true
+	},
+}
+
+var r_final_pos_long_2_o_ang = TccRule{
+	rs: "([:front-position-vowel:]) " +
+		"([:o_ang: && !:diacritic-vowel:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -472,7 +506,7 @@ var r_front_o = TccRule{
 // We allow all front-position vowels here
 var r_final_pos_long_2 = TccRule{
 	rs: "([:front-position-vowel:]) " +
-		"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])?",
+		"([:consonant: && !:o_ang: && !:diacritic-vowel:]) ([:sliding-consonant:])?",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
