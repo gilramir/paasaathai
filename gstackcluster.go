@@ -14,6 +14,7 @@ package paasaathai
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gilramir/objregexp"
 )
@@ -226,7 +227,7 @@ func (s *GStackClusterParser) Initialize() {
 			return gs.DiacriticVowel == THAI_CHARACTER_MAI_HAN_AKAT
 		})
 
-	s.compiler.MakeClass("consonant-with-maithaku",
+	s.compiler.MakeClass("has-maithaku",
 		func(gs GraphemeStack) bool {
 			return RuneIsConsonant(gs.Main) && gs.DiacriticVowel == THAI_CHARACTER_MAITAIKHU
 		})
@@ -241,50 +242,23 @@ func (s *GStackClusterParser) Initialize() {
 			return RuneIsFrontPositionVowel(gs.Main)
 		})
 
-	// regex identity classes
-	s.compiler.AddIdentity("sara_a",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_SARA_A)))
+	// regex identity classes for all code points
+	for fullName, thaiRune := range ThaiNameToRune {
+		var name string
+		if fullName[0:11] == "THAI_DIGIT_" {
+			name = fullName[11:]
+		} else if fullName[0:15] == "THAI_CHARACTER_" {
+			name = fullName[15:]
+		} else if fullName[0:20] == "THAI_CURRENCY_SYMBOL" {
+			name = fullName[20:]
+		} else {
+			panic(fmt.Sprintf("Didn't expect code point name %s", fullName))
+		}
 
-	s.compiler.AddIdentity("sara_e",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_SARA_E)))
-
-	s.compiler.AddIdentity("sara_ae",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_SARA_AE)))
-
-	s.compiler.AddIdentity("sara_o",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_SARA_O)))
-
-	s.compiler.AddIdentity("sara_aa",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_SARA_AA)))
-
-	s.compiler.AddIdentity("sara_am",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_SARA_AM)))
-
-	s.compiler.AddIdentity("o_ang",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_O_ANG)))
-
-	s.compiler.AddIdentity("yo_yak",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_YO_YAK)))
-
-	s.compiler.AddIdentity("wo_waen",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_WO_WAEN)))
-
-	s.compiler.AddIdentity("ro_rua",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_RO_RUA)))
-
-	s.compiler.AddIdentity("paiyannoi",
-		MustParseSingleGraphemeStack(
-			string(THAI_CHARACTER_PAIYANNOI)))
+		name = strings.ToLower(name)
+		s.compiler.AddIdentity(name,
+			MustParseSingleGraphemeStack(string(thaiRune)))
+	}
 
 	s.compiler.Finalize()
 
@@ -309,11 +283,15 @@ func (s *GStackClusterParser) Initialize() {
 	r_single_consonant.CompileWith(&s.compiler)
 }
 
-func assertRegisterLength(reg objregexp.Range, length int) {
+func assertGroupLength(reg objregexp.Range, length int) {
 	if reg.Length() != length {
-		panic(fmt.Sprintf("Register expected to have length %d. Got: %+v",
+		panic(fmt.Sprintf("Group expected to have length %d. Got: %+v",
 			length, reg))
 	}
+}
+
+func (s *GStackClusterParser) CompileRegex(text string) (*objregexp.Regexp[GraphemeStack], error) {
+	return s.compiler.Compile(text)
 }
 
 func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStackCluster {
@@ -390,20 +368,20 @@ var r_final_pos_short_1 = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+m.Length()])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		if !reg1.Empty() {
-			assertRegisterLength(reg1, 1)
+			assertGroupLength(reg1, 1)
 			c.FrontVowel = input[reg1.Start]
 		}
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
-		reg3 := m.Register(3)
+		reg3 := m.Group(3)
 		if !reg3.Empty() {
 			c.Tail = append(c.Tail, input[reg3.Start:reg3.End]...)
 		}
-		reg4 := m.Register(4)
+		reg4 := m.Group(4)
 		c.Tail = append(c.Tail, input[reg4.Start:reg4.End]...)
 
 		*length = m.Length()
@@ -422,20 +400,20 @@ var r_final_pos_short_3 = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+m.Length()])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
-		reg3 := m.Register(3)
+		reg3 := m.Group(3)
 		if !reg3.Empty() {
 			c.Tail = append(c.Tail, input[reg3.Start:reg3.End]...)
 		}
-		reg4 := m.Register(4)
+		reg4 := m.Group(4)
 		c.Tail = append(c.Tail, input[reg4.Start:reg4.End]...)
 
-		reg5 := m.Register(5)
+		reg5 := m.Group(5)
 		c.Tail = append(c.Tail, input[reg5.Start])
 
 		*length = m.Length()
@@ -453,14 +431,14 @@ var r_final_pos_long_1 = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+m.Length()])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FirstConsonant = input[reg1.Start]
 
-		if m.HasRegister(2) {
-			reg2 := m.Register(2)
+		if m.HasGroup(2) {
+			reg2 := m.Group(2)
 			c.Tail = append(c.Tail, input[reg2.Start:reg2.End]...)
 		}
-		reg3 := m.Register(3)
+		reg3 := m.Group(3)
 		c.Tail = append(c.Tail, input[reg3.Start:reg3.End]...)
 
 		*length = m.Length()
@@ -479,10 +457,10 @@ var r_front_o = TccRule{
 		}
 		*c = makeCluster(input[i : i+m.Length()])
 
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
 		*length = m.Length()
@@ -502,14 +480,14 @@ var r_final_pos_long_2 = TccRule{
 		}
 		*c = makeCluster(input[i : i+m.Length()])
 
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
-		if m.HasRegister(3) {
-			reg3 := m.Register(3)
+		if m.HasGroup(3) {
+			reg3 := m.Group(3)
 			c.Tail = append(c.Tail, input[reg3.Start])
 		}
 
@@ -530,17 +508,17 @@ var r_eu_o_ao = TccRule{
 		}
 		*c = makeCluster(input[i : i+m.Length()])
 
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
-		if m.HasRegister(3) {
-			reg3 := m.Register(3)
+		if m.HasGroup(3) {
+			reg3 := m.Group(3)
 			c.Tail = append(c.Tail, input[reg3.Start])
 		}
-		reg4 := m.Register(4)
+		reg4 := m.Group(4)
 		c.Tail = append(c.Tail, input[reg4.Start])
 
 		*length = m.Length()
@@ -560,17 +538,17 @@ var r_final_pos_eei = TccRule{
 		}
 		*c = makeCluster(input[i : i+m.Length()])
 
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
-		if m.HasRegister(3) {
-			reg3 := m.Register(3)
+		if m.HasGroup(3) {
+			reg3 := m.Group(3)
 			c.Tail = append(c.Tail, input[reg3.Start])
 		}
-		reg4 := m.Register(4)
+		reg4 := m.Group(4)
 		c.Tail = append(c.Tail, input[reg4.Start])
 
 		*length = m.Length()
@@ -590,19 +568,19 @@ var r_uu_ua = TccRule{
 		}
 		*c = makeCluster(input[i : i+m.Length()])
 
-		if m.HasRegister(1) {
-			reg1 := m.Register(1)
+		if m.HasGroup(1) {
+			reg1 := m.Group(1)
 			c.FrontVowel = input[reg1.Start]
 		}
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
-		if m.HasRegister(3) {
-			reg3 := m.Register(3)
+		if m.HasGroup(3) {
+			reg3 := m.Group(3)
 			c.Tail = append(c.Tail, input[reg3.Start])
 		}
-		reg4 := m.Register(4)
+		reg4 := m.Group(4)
 		c.Tail = append(c.Tail, input[reg4.Start])
 
 		*length = m.Length()
@@ -613,7 +591,7 @@ var r_uu_ua = TccRule{
 // Medial position maithaku patterns
 var r_medial_maithaiku = TccRule{
 	rs: "([:sara_e:] | [:sara_ae:] ) " +
-		"([:consonant-with-maithaku:]) ([:sliding-consonant:])? " +
+		"([:consonant: && :has-maithaku:]) ([:sliding-consonant:])? " +
 		"([:consonant: && !:diacritic-vowel:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
@@ -621,17 +599,17 @@ var r_medial_maithaiku = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+m.Length()])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
-		reg3 := m.Register(3)
+		reg3 := m.Group(3)
 		if !reg3.Empty() {
 			c.Tail = append(c.Tail, input[reg3.Start:reg3.End]...)
 		}
-		reg4 := m.Register(4)
+		reg4 := m.Group(4)
 		c.Tail = append(c.Tail, input[reg4.Start:reg4.End]...)
 
 		*length = m.Length()
@@ -650,17 +628,17 @@ var r_medial_sara_i = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+m.Length()])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
-		reg3 := m.Register(3)
+		reg3 := m.Group(3)
 		if !reg3.Empty() {
 			c.Tail = append(c.Tail, input[reg3.Start:reg3.End]...)
 		}
-		reg4 := m.Register(4)
+		reg4 := m.Group(4)
 		c.Tail = append(c.Tail, input[reg4.Start:reg4.End]...)
 
 		*length = m.Length()
@@ -679,17 +657,17 @@ var r_ia = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+m.Length()])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.FirstConsonant = input[reg2.Start]
 
-		reg3 := m.Register(3)
+		reg3 := m.Group(3)
 		if !reg3.Empty() {
 			c.Tail = append(c.Tail, input[reg3.Start:reg3.End]...)
 		}
-		reg4 := m.Register(4)
+		reg4 := m.Group(4)
 		c.Tail = append(c.Tail, input[reg4.Start:reg4.End]...)
 
 		*length = m.Length()
@@ -707,10 +685,10 @@ var r_ua = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+m.Length()])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FirstConsonant = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.Tail = append(c.Tail, input[reg2.Start:reg2.End]...)
 
 		*length = m.Length()
@@ -728,10 +706,10 @@ var r_medial_ua = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+m.Length()])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FirstConsonant = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.Tail = append(c.Tail, input[reg2.Start:reg2.End]...)
 
 		*length = m.Length()
@@ -749,10 +727,10 @@ var r_rr = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+m.Length()])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FirstConsonant = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.Tail = append(c.Tail, input[reg2.Start:reg2.End]...)
 
 		*length = m.Length()
@@ -769,10 +747,10 @@ var r_c_sara_am = TccRule{
 			return false
 		}
 		*c = makeCluster(input[i : i+2])
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FirstConsonant = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.Tail = append(c.Tail, input[reg2.Start])
 
 		*length = m.Length()
@@ -789,10 +767,10 @@ var r_mai_han_akat = TccRule{
 		}
 		*c = makeCluster(input[i : i+m.Length()])
 
-		reg1 := m.Register(1)
+		reg1 := m.Group(1)
 		c.FirstConsonant = input[reg1.Start]
 
-		reg2 := m.Register(2)
+		reg2 := m.Group(2)
 		c.Tail = append(c.Tail, input[reg2.Start])
 
 		*length = m.Length()
