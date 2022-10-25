@@ -17,11 +17,11 @@ the consonant. It might have a tone mark. And there a few other things too.
 
 In this example, the word "bperd" ("to close") is shown as a single word:
 
-![bperd as a word text](docs/example-bperd-word.jpg)
+![bperd as a word text](docs/example-bperd-word.png)
 
 And here are the 3 individual GraphemeStacks.
 
-![bperd as grapheme stacks](docs/example-bperd-grapheme-stacks.jpg)
+![bperd as grapheme stacks](docs/example-bperd-grapheme-stacks.png)
 
 
 ## GStackClusters
@@ -36,7 +36,7 @@ Most of these clusters are created from how some vowels are written as
 multi-character sequences. In this example, you see the same word, "bperd",
 broken up into 2 clusters of grapheme stacks, or GStackClusters.
 
-![bperd as gstack clusters](docs/example-bperd-clusters.jpg)
+![bperd as gstack clusters](docs/example-bperd-clusters.png)
 
 The front character, a vowel, must be followed by a consonant.  They,
 they form a cluster.  Note that these clusters are not syllables;
