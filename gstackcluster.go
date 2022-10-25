@@ -482,8 +482,9 @@ var r_front_o = TccRule{
 }
 
 var r_final_pos_long_2_o_ang = TccRule{
+	// ":o_ang:" does already mean "!:diactricit-vowel:"
 	rs: "([:front-position-vowel:]) " +
-		"([:o_ang: && !:diacritic-vowel:])",
+		"([:o_ang:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
