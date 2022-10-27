@@ -19,7 +19,8 @@ In this example, the word "bperd" ("to close") is shown as a single word:
 
 ![bperd as a word text](docs/example-bperd-word.png)
 
-But it is composed of 4 separate Unicode code points:
+But it is composed of 4 separate Unicode code points, as per
+the [Unicode codepoint documentation for Thai](https://www.unicode.org/charts/PDF/U0E00.pdf):
 
 ![sara-e](docs/U0E40.png) ![bo-bpla](docs/U0E1B.png) ![sara-i](docs/U0E34.png) ![do-dek](docs/U0E14.png)
 
