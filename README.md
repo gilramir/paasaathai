@@ -19,7 +19,14 @@ In this example, the word "bperd" ("to close") is shown as a single word:
 
 ![bperd as a word text](docs/example-bperd-word.png)
 
-And here are the 3 individual GraphemeStacks.
+But it is composed of 4 separate Unicode code points:
+
+![sara-e](docs/U0E40.png) ![bo-bpla](docs/U0E1B.png) ![sara-i](docs/U0E34.png) ![do-dek](docs/U0E14.png)
+
+But two of the Unicode codepoints are in the same horizontal space, one stacked
+vertically on top of the other. In this module, these vertically-stacked
+graphemes are called GraphemeStacks.
+Here are the 3 individual GraphemeStacks in this word:
 
 ![bperd as grapheme stacks](docs/example-bperd-grapheme-stacks.png)
 
