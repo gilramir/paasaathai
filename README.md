@@ -6,9 +6,9 @@ It is a work in progress and the API and functionality is constantly changing.
 
 # Functionality
 
-The module provides two major pieces of functionality.
+The module provides different pieces of functionality.
 
-## GraphmeStacks
+## GraphemeStacks
 
 This module can parse UTF-8 Thai text and produce objects called GraphemeStacks.
 A single user-perceived Thai "character" can have multiple individual
