@@ -83,6 +83,10 @@ func RuneIsVowel(r rune) bool {
 		RuneIsLowerPositionVowel(r)
 }
 
+func RuneIsDiacritic(r rune) bool {
+	return RuneIsUpperPosition(r) || RuneIsLowerPositionVowel(r)
+}
+
 func RuneIsUpperPosition(r rune) bool {
 	return RuneIsUpperPositionVowel(r) || RuneIsToneMark(r) || RuneIsUpperPositionSign(r)
 }

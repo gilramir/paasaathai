@@ -4,6 +4,186 @@ import (
 	. "gopkg.in/check.v1"
 )
 
+/*
+ The vowel orthograpy patterns from "Thai For Beginners" p. 243
+ There are 12 patterns, #1 - #12, each with a short and long form
+*/
+
+func (s *MySuite) TestClusterTFBp243Short01a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "ละ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_SARA_A)
+}
+
+func (s *MySuite) TestClusterTFBp243Short01b(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "สละ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_SO_SUA)
+
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[1].Tail[0].Main, Equals, THAI_CHARACTER_SARA_A)
+}
+
+func (s *MySuite) TestClusterTFBp243Long01a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "หา"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_HO_HIP)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_SARA_AA)
+}
+
+func (s *MySuite) TestClusterTFBp243Long01b(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "อ่าน"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gcs[0].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_SARA_AA)
+
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NO_NU)
+}
+
+func (s *MySuite) TestClusterTFBp243Short02a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "สิบ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_SO_SUA)
+	c.Check(gcs[0].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_I)
+
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_BO_BAIMAI)
+}
+
+func (s *MySuite) TestClusterTFBp243Long02a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "หนี"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_HO_HIP)
+
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NO_NU)
+	c.Check(gcs[1].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_II)
+}
+
+func (s *MySuite) TestClusterTFBp243Short03a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "ตึก"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_TO_TAO)
+	c.Check(gcs[0].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_UE)
+
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_KO_KAI)
+}
+
+func (s *MySuite) TestClusterTFBp243Long03a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "หรือ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_HO_HIP)
+
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_RO_RUA)
+	c.Check(gcs[1].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_UEE)
+	c.Check(gcs[1].Tail[0].Main, Equals, THAI_CHARACTER_O_ANG)
+}
+
+func (s *MySuite) TestClusterTFBp243Short04a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "พุธ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_PHO_PHAN)
+	c.Check(gcs[0].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_U)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_THO_THONG)
+}
+
+func (s *MySuite) TestClusterTFBp243Long04a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "หมู"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_HO_HIP)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_MO_MA)
+	c.Check(gcs[1].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_UU)
+}
+
+/*
+func (s *MySuite) TestClusterTFBp243Short06a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+input :=  "แหล่ะ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_SO_SUA)
+
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[1].Tail[0].Main, Equals, THAI_CHARACTER_SARA_A)
+}
+*/
+
+/*
 func (s *MySuite) TestCluster01(c *C) {
 
 	var gcp GStackClusterParser
@@ -38,7 +218,7 @@ func (s *MySuite) TestCluster02(c *C) {
 	c.Check(gcs[0].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
 	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_O_ANG)
 }
-
+8?
 //	input := "เมตตา"
 /*
 func (s *MySuite) TestCCCase01(c *C) {
