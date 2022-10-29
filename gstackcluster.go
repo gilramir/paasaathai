@@ -45,6 +45,9 @@ type GStackCluster struct {
 	// The Tail might contain consontants and vowels,
 	// only consonants, or only vowels.
 	Tail []GraphemeStack
+
+	// The name of the rule that created this cluster.
+	MatchingRule string
 }
 
 func (s *GStackCluster) Repr() string {
@@ -141,6 +144,7 @@ And from p. 250
 */
 
 type TccRule struct {
+	name  string
 	rs    string
 	ck    func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool
 	regex *objregexp.Regexp[GraphemeStack]
@@ -349,7 +353,8 @@ next_input:
 		for _, rule := range rules {
 			matched := rule.ck(&rule, input, i, &length, &c)
 			if matched {
-				fmt.Printf("matched: %s %s\n", rule.rs, c.Repr())
+				c.MatchingRule = rule.name
+				fmt.Printf("matched: %s %s %s\n", rule.name, rule.rs, c.Repr())
 				clusters = append(clusters, c)
 				i += length
 				continue next_input
@@ -366,6 +371,7 @@ next_input:
 
 // Short vowel sara a patterns
 var r_final_pos_short_1 = TccRule{
+	name: "final_pos_short_1",
 	rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:])? " +
 		"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])? " +
 		"([:sara_a:])",
@@ -398,6 +404,7 @@ var r_final_pos_short_1 = TccRule{
 
 // Short vowel a/oh patterns
 var r_final_pos_short_3 = TccRule{
+	name: "final_pos_short_3",
 	rs: "([:sara_e:]) " +
 		"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])? " +
 		"([:sara_aa:]|[:o_ang:]) ([:sara_a:])",
@@ -430,6 +437,7 @@ var r_final_pos_short_3 = TccRule{
 
 // Long vowel patterns; these must be checked after the short vowels
 var r_final_pos_long_1 = TccRule{
+	name: "final_pos_long_1",
 	rs: "([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])? " +
 		"([:sara_aa:] | [:o_ang:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
@@ -457,6 +465,7 @@ var r_final_pos_long_1 = TccRule{
 var r_front_o = TccRule{
 	//	rs: "([:sara_o:]) " +
 	//		"([:consonant: && !:diacritic-vowel:])",
+	name: "front_o",
 	rs: "([:front-position-vowel:]) " +
 		"([:consonant: && !:o_ang: && !:diacritic-vowel:]) " +
 		"([:sliding-consonant: && :diacritic-vowel:] | " +
@@ -483,6 +492,7 @@ var r_front_o = TccRule{
 
 var r_final_pos_long_2_o_ang = TccRule{
 	// ":o_ang:" does already mean "!:diactricit-vowel:"
+	name: "final_pos_long_2_o_ang",
 	rs: "([:front-position-vowel:]) " +
 		"([:o_ang:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
@@ -506,6 +516,7 @@ var r_final_pos_long_2_o_ang = TccRule{
 // Similar to re_final_pos_short_1, but no sara_a at the end
 // We allow all front-position vowels here
 var r_final_pos_long_2 = TccRule{
+	name: "pos_long_2",
 	rs: "([:front-position-vowel:]) " +
 		"([:consonant: && !:o_ang: && !:diacritic-vowel:]) ([:sliding-consonant:])?",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
@@ -533,6 +544,7 @@ var r_final_pos_long_2 = TccRule{
 
 // sara e + C + (eu,o,ao) vowel sandwich
 var r_eu_o_ao = TccRule{
+	name: "eu_o_ao",
 	rs: "([:sara_e:]) " +
 		"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])?" +
 		"([:sara_aa:] | [:o_ang:] [:sara_a:]?)",
@@ -563,6 +575,7 @@ var r_eu_o_ao = TccRule{
 
 // sara e + C + e vowel sandwich
 var r_final_pos_eei = TccRule{
+	name: "final_pos_eei",
 	rs: "([:sara_e:]) " +
 		"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])?" +
 		"([:yo_yak:])",
@@ -593,6 +606,7 @@ var r_final_pos_eei = TccRule{
 
 // sara e ? = C + uu/ua
 var r_uu_ua = TccRule{
+	name: "uu_ua",
 	rs: "([:sara_e:]?) " +
 		"([:consonant: && :has-sara-uee:]) ([:sliding-consonant:]?)" +
 		"([:o_ang:] [:sara_a:]?)",
@@ -625,6 +639,7 @@ var r_uu_ua = TccRule{
 
 // Medial position maithaku patterns
 var r_medial_maithaiku = TccRule{
+	name: "medial_maithaiku",
 	rs: "([:sara_e:] | [:sara_ae:] ) " +
 		"([:consonant: && :has-maithaku:]) ([:sliding-consonant:])? " +
 		"([:consonant: && !:diacritic-vowel:])",
@@ -654,6 +669,7 @@ var r_medial_maithaiku = TccRule{
 
 // Medial position sara i patterns
 var r_medial_sara_i = TccRule{
+	name: "medial_sara_i",
 	rs: "([:sara_e:] ) " +
 		"([:consonant: && :has-sara-i:]) ([:sliding-consonant:])? " +
 		"([:consonant: && !:diacritic-vowel:])",
@@ -683,6 +699,7 @@ var r_medial_sara_i = TccRule{
 
 // long or short ia
 var r_ia = TccRule{
+	name: "r_ia",
 	rs: "([:sara_e:] ) " +
 		"([:consonant: && :has-sara-ii:]) ([:sliding-consonant:])? " +
 		"([:yo_yak:] [:sara_a:]?)",
@@ -712,6 +729,7 @@ var r_ia = TccRule{
 
 // long or short ua
 var r_ua = TccRule{
+	name: "r_ua",
 	rs: "([:consonant: && :has-mai-han-akat:]) ([:sliding-consonant:]? " +
 		"[:wo_waen:] [:sara_a:]?)",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
@@ -733,6 +751,7 @@ var r_ua = TccRule{
 
 // medial_ua
 var r_medial_ua = TccRule{
+	name: "medial_ua",
 	rs: "([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:]? " +
 		"[:wo_waen:] [:consonant:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
@@ -755,7 +774,8 @@ var r_medial_ua = TccRule{
 // rr
 // "บทบรรณาธิการ"
 var r_rr = TccRule{
-	rs: "([:consonant:]) ([:ro_rua:][:ro_rua:])",
+	name: "rr",
+	rs:   "([:consonant:]) ([:ro_rua:][:ro_rua:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -775,7 +795,8 @@ var r_rr = TccRule{
 
 // C + SARA_AM... can this be combined with re_final_pos_long_1 ?
 var r_c_sara_am = TccRule{
-	rs: "([:consonant: && !:diacritic-vowel:]) ([:sara_am:])",
+	name: "c_sara_am",
+	rs:   "([:consonant: && !:diacritic-vowel:]) ([:sara_am:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -794,7 +815,8 @@ var r_c_sara_am = TccRule{
 }
 
 var r_mai_han_akat = TccRule{
-	rs: "([:consonant: && :has-mai-han-akat:]) ([:consonant:])",
+	name: "mai_han_akat",
+	rs:   "([:consonant: && :has-mai-han-akat:]) ([:consonant:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -815,7 +837,8 @@ var r_mai_han_akat = TccRule{
 
 // Standalone symbol
 var r_standalone_symbol = TccRule{
-	rs: "[:paiyannoi:]",
+	name: "standalone_symbol",
+	rs:   "[:paiyannoi:]",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -829,8 +852,10 @@ var r_standalone_symbol = TccRule{
 }
 
 // From BNF in "Character Cluster Based Thai Information Retrieval"
+// But do we really need this?
 var r_gaaw = TccRule{
-	rs: "[:gaaw:]",
+	name: "gaaw",
+	rs:   "[:gaaw:]",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -845,7 +870,8 @@ var r_gaaw = TccRule{
 
 // Do we at least have a consonant?
 var r_single_consonant = TccRule{
-	rs: "[:consonant:]",
+	name: "consonant",
+	rs:   "[:consonant:]",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
