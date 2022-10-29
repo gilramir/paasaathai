@@ -167,14 +167,13 @@ var ConsonantsAllowedAtFront = NewSetFromSlice([]rune{
 // The initial O_ANG changes a subsequent
 // consonant into being a MID class consonant.
 var ConsonantsAllowedAfterOAng = NewSetFromSlice([]rune{
-	'ก', 'ง', 'ด', 'ต', 'ธ',
-	'น', 'ม', 'ย', 'ร', 'ว',
+	'ย',
 })
 
 // The initial HO_HIP changes a subsequent
 // consonant into being a HIGH class consonant.
 var ConsonantsAllowedAfterHoHip = NewSetFromSlice([]rune{
-	'ก', 'ญ', 'ด', 'น', 'ม',
+	'ญ', 'ง', 'น', 'ม',
 	'ย', 'ร', 'ล', 'ว',
 })
 
@@ -215,6 +214,11 @@ func (s *GStackClusterParser) Initialize() {
 	s.compiler.MakeClass("diacritic-vowel",
 		func(gs GraphemeStack) bool {
 			return gs.DiacriticVowel != 0
+		})
+
+	s.compiler.MakeClass("low-consonant-after-ho-hip",
+		func(gs GraphemeStack) bool {
+			return ConsonantsAllowedAfterHoHip.Has(gs.Main)
 		})
 
 	/*
@@ -301,6 +305,7 @@ func (s *GStackClusterParser) Initialize() {
 
 	s.compiler.Finalize()
 
+	r_maybe_sandwich_sara_a.CompileWith(&s.compiler)
 	r_sara_a_aa.CompileWith(&s.compiler)
 	r_sara_uee.CompileWith(&s.compiler)
 	/*
@@ -347,6 +352,7 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 	clusters := make([]GStackCluster, 0, estimatedAllocation)
 
 	rules := []TccRule{
+		r_maybe_sandwich_sara_a, // this comes after sandwich a_aa
 		r_sara_a_aa,
 		r_sara_uee,
 		r_single_diacritic_vowel, // this comes after other vowels
@@ -501,6 +507,41 @@ var r_sara_uee = TccRule{
 
 		reg2 := m.Group(2)
 		c.Tail = append(c.Tail, input[reg2.Start])
+
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_maybe_sandwich_sara_a = TccRule{
+	name: "maybe_sandwich_sara_a",
+	rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:]) " +
+		"(" +
+		"([:consonant: && !:diacritic-vowel:]) | " +
+		"([:ho_hip: && !:diacritic-vowel:] [:low-consonant-after-ho-hip:]) " +
+		")" +
+		"([:sara_a:]?)",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Group(1)
+		fmt.Printf("reg1: %v\n", reg1)
+		c.FrontVowel = input[reg1.Start]
+
+		reg2 := m.Group(2)
+		fmt.Printf("reg2: %v\n", reg1)
+		c.FirstConsonant = input[reg2.Start]
+		if reg2.Length() > 1 {
+			c.Tail = append(c.Tail, input[reg2.Start+1:reg2.End]...)
+		}
+
+		if m.HasGroup(5) {
+			reg3 := m.Group(5)
+			c.Tail = append(c.Tail, input[reg3.Start])
+		}
 
 		*length = m.Length()
 		return true

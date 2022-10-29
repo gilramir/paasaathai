@@ -164,24 +164,68 @@ func (s *MySuite) TestClusterTFBp243Long04a(c *C) {
 	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_MO_MA)
 	c.Check(gcs[1].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_UU)
 }
-
-/*
-func (s *MySuite) TestClusterTFBp243Short06a(c *C) {
+func (s *MySuite) TestClusterTFBp243Short05a(c *C) {
 
 	var gcp GStackClusterParser
 	gcp.Initialize()
-input :=  "แหล่ะ"
+	input := "เตะ"
 	gs := ParseGraphemeStacks(input)
 	gcs := gcp.ParseGraphemeStacks(gs)
 
 	c.Assert(len(gcs), Equals, 1)
 
-	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_SO_SUA)
-
-	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_LO_LING)
-	c.Check(gcs[1].Tail[0].Main, Equals, THAI_CHARACTER_SARA_A)
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_E)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_TO_TAO)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_SARA_A)
 }
-*/
+
+func (s *MySuite) TestClusterTFBp243Long05a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "เอง"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_E)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NGO_NGU)
+}
+
+func (s *MySuite) TestClusterTFBp243Short06a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "และ"
+	//input :=  "แหล่ะ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AE)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_SARA_A)
+}
+
+func (s *MySuite) TestClusterTFBp243Short06b(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "แหล่ะ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AE)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_HO_HIP)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[0].Tail[0].UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
+	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
+}
 
 /*
 func (s *MySuite) TestCluster01(c *C) {
