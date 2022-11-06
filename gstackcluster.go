@@ -261,27 +261,27 @@ func (s *GStackClusterParser) Initialize() {
 		func(gs GraphemeStack) bool {
 			return RuneIsConsonant(gs.Main)
 		})
-	s.compiler.MakeClass("diacritic-vowel",
+	s.compiler.MakeClass("diacritic vowel",
 		func(gs GraphemeStack) bool {
 			return gs.DiacriticVowel != 0
 		})
 
-	s.compiler.MakeClass("low-consonant-after-ho-hip",
+	s.compiler.MakeClass("low consonant after ho hip",
 		func(gs GraphemeStack) bool {
 			return LowConsonantsAllowedAfterHoHip.Has(gs.Main)
 		})
 
-	s.compiler.MakeClass("consonant-before-gliding-lo-ling",
+	s.compiler.MakeClass("consonant before gliding lo ling",
 		func(gs GraphemeStack) bool {
 			return ConsonantsAllowedBeforeGlidingLoLing.Has(gs.Main)
 		})
 
-	s.compiler.MakeClass("consonant-before-gliding-ro-rua",
+	s.compiler.MakeClass("consonant before gliding ro rua",
 		func(gs GraphemeStack) bool {
 			return ConsonantsAllowedBeforeGlidingRoRua.Has(gs.Main)
 		})
 
-	s.compiler.MakeClass("consonant-before-gliding-wo-waen",
+	s.compiler.MakeClass("consonant before gliding wo waen",
 		func(gs GraphemeStack) bool {
 			return ConsonantsAllowedBeforeGlidingWoWaen.Has(gs.Main)
 		})
@@ -318,12 +318,12 @@ func (s *GStackClusterParser) Initialize() {
 				return GlidingConsonants.Has(gs.Main)
 			})
 	*/
-	s.compiler.MakeClass("front-position-vowel",
+	s.compiler.MakeClass("front position vowel",
 		func(gs GraphemeStack) bool {
 			return RuneIsFrontPositionVowel(gs.Main)
 		})
 
-	s.compiler.MakeClass("mid-position-vowel",
+	s.compiler.MakeClass("mid position vowel",
 		func(gs GraphemeStack) bool {
 			return RuneIsMidPositionVowel(gs.Main)
 		})
@@ -339,13 +339,14 @@ func (s *GStackClusterParser) Initialize() {
 				continue
 			}
 			name = fullName[15:]
-		} else if fullName[0:20] == "THAI_CURRENCY_SYMBOL" {
-			name = fullName[20:]
+		} else if fullName[0:21] == "THAI_CURRENCY_SYMBOL_" {
+			name = fullName[21:]
 		} else {
 			panic(fmt.Sprintf("Didn't expect code point name %s", fullName))
 		}
 
 		name = strings.ToLower(name)
+		name = strings.ReplaceAll(name, "_", " ")
 		s.compiler.AddIdentity(name,
 			MustParseSingleGraphemeStack(string(thaiRune)))
 	}
@@ -365,6 +366,7 @@ func (s *GStackClusterParser) Initialize() {
 		}
 
 		name = strings.ToLower(name)
+		name = strings.ReplaceAll(name, "_", " ")
 		s.compiler.MakeClass(name, curriedHasClass(thaiRune))
 	}
 
@@ -486,8 +488,8 @@ next_input:
 // Short vowel sara a or aa pattern
 var r_sara_a_aa = TccRule{
 	name: "sara_a_aa",
-	rs: "([:consonant: && !:diacritic-vowel:])" +
-		"([:sara_a:] | [:sara_aa:])",
+	rs: "([:consonant: && !:diacritic vowel:])" +
+		"([:sara a:] | [:sara aa:])",
 	/*
 		rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:])? " +
 			"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])? " +
@@ -522,7 +524,7 @@ var r_sara_a_aa = TccRule{
 var r_single_diacritic_vowel = TccRule{
 	name: "single_diacritic_vowel",
 	rs: "([:consonant: && " +
-		"(:sara_i: || :sara_ii: || :sara_ue: || :sara_u: || :sara_uu:) ])",
+		"(:sara i: || :sara ii: || :sara ue: || :sara u: || :sara uu:) ])",
 	/*
 		rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:])? " +
 			"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])? " +
@@ -552,7 +554,7 @@ var r_single_diacritic_vowel = TccRule{
 
 var r_sara_uee = TccRule{
 	name: "sara_uee",
-	rs:   "([:consonant: && :sara_uee:]) ([:o_ang:])",
+	rs:   "([:consonant: && :sara uee:]) ([:o ang:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -582,17 +584,17 @@ var r_sara_uee = TccRule{
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 var r_maybe_sandwich_sara_a = TccRule{
 	name: "maybe_sandwich_sara_a",
-	rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:]) " +
+	rs: "([:sara e:] | [:sara ae:] | [:sara o:]) " +
 		"(" +
 		// BEGIN possible consonants allowed between sandwich vowels
-		"([:consonant: && !:diacritic-vowel:]) | " +
-		"([:ho_hip: && !:diacritic-vowel:] [:low-consonant-after-ho-hip: && !:diacritic-vowel:]) | " +
-		"([:consonant-before-gliding-lo-ling: && !:diacritic-vowel:] [:lo_ling: && !:diacritic-vowel:]) " +
-		"([:consonant-before-gliding-ro-rua: && !:diacritic-vowel:] [:ro_rua: && !:diacritic-vowel:]) " +
-		"([:consonant-before-gliding-wo-waen: && !:diacritic-vowel:] [:wo_waen: && !:diacritic-vowel:]) " +
+		"([:consonant: && !:diacritic vowel:]) | " +
+		"([:ho hip: && !:diacritic vowel:] [:low consonant after ho hip: && !:diacritic vowel:]) | " +
+		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && !:diacritic vowel:]) " +
+		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && !:diacritic vowel:]) " +
+		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && !:diacritic vowel:]) " +
 		// END   possible consonants allowed between sandwich vowels
 		")" +
-		"([:sara_a:]?)",
+		"([:sara a:]?)",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -1127,7 +1129,7 @@ var r_gaaw = TccRule{
 // Do we at least have a bare consonant?
 var r_single_consonant = TccRule{
 	name: "consonant",
-	rs:   "[:consonant: && !:diacritic-vowel:]",
+	rs:   "[:consonant: && !:diacritic vowel:]",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
