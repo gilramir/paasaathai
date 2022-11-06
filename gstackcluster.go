@@ -154,6 +154,7 @@ func (s *TccRule) CompileWith(compiler *objregexp.Compiler[GraphemeStack]) {
 	s.regex = compiler.MustCompile(s.rs)
 }
 
+/*
 var ConsonantsAllowedAtFront = NewSetFromSlice([]rune{
 	'ก', 'ข', 'ค', 'ง', 'จ',
 	'ฉ', 'ช', 'ซ', 'ญ', 'ด',
@@ -163,6 +164,7 @@ var ConsonantsAllowedAtFront = NewSetFromSlice([]rune{
 	'ล', 'ว', 'ศ', 'ส', 'ห',
 	'อ',
 })
+*/
 
 // The initial O_ANG changes a subsequent
 // consonant into being a MID class consonant.
@@ -172,10 +174,56 @@ var ConsonantsAllowedAfterOAng = NewSetFromSlice([]rune{
 
 // The initial HO_HIP changes a subsequent
 // consonant into being a HIGH class consonant.
-var ConsonantsAllowedAfterHoHip = NewSetFromSlice([]rune{
+var LowConsonantsAllowedAfterHoHip = NewSetFromSlice([]rune{
 	'ญ', 'ง', 'น', 'ม',
 	'ย', 'ร', 'ล', 'ว',
 })
+
+// TODO check yo ying 40156. เผียะ in data/best/novel.zip(novel/novel_00001.txt) line 331 item 4
+
+// Consonants that can glide with lo ling
+// แต่ละ in data/best/article.zip(article/article_00001.txt) line 14 item 40
+// แคระแกร็น in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00003.txt) line 344 item 6
+// ตบแผละ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00023.txt) line 25 item 11
+// แกละ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00023.txt) line 326 item 2
+// TODO check not gliding 38296. หมู่บ้านการเคหะร่มเกล้า in data/best/news.zip(news/news_00080.txt) line 20 item 121
+// TODO check not gliding 47608. เพคะ in data/best/novel.zip(novel/novel_00071.txt) line 52 item 3
+
+var ConsonantsAllowedBeforeGlidingLoLing = NewSetFromSlice([]rune{
+	THAI_CHARACTER_TO_TAO,
+	THAI_CHARACTER_KHO_KHWAI,
+	THAI_CHARACTER_PHO_PHUNG,
+	THAI_CHARACTER_KO_KAI,
+})
+
+// Consonants that can glide with ro rua
+// แกระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00026.txt) line 177 item 18
+// ว่านหางนกยูงแคระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00030.txt) line 133 item 38
+// TODO 33902. แม่ระมาด in data/best/news.zip(news/news_00045.txt) line 91 item 33
+// TODO 40612. แสยะ in data/best/novel.zip(novel/novel_00004.txt) line 11 item 22
+// TODO 11829. รัฐอิสลามอเสระ in data/best/article.zip(article/article_00123.txt) line 64 item 58
+// แประ in data/best/novel.zip(novel/novel_00021.txt) line 238 item 37
+// พระเถรานุเถระ in data/best/article.zip(article/article_00013.txt) line 27 item 25
+var ConsonantsAllowedBeforeGlidingRoRua = NewSetFromSlice([]rune{
+	THAI_CHARACTER_KO_KAI,
+	THAI_CHARACTER_KHO_KHWAI,
+	THAI_CHARACTER_PO_PLA,
+	THAI_CHARACTER_THO_THUNG,
+})
+
+// Consonants that can glide with wo waen
+// แขวะ in data/best/news.zip(news/news_00008.txt) line 93 item 2
+var ConsonantsAllowedBeforeGlidingWoWaen = NewSetFromSlice([]rune{
+	THAI_CHARACTER_KHO_KHAI,
+})
+
+// TODO chepa!
+// 1754. เฉพาะเจาะจง in data/best/article.zip(article/article_00004.txt) line 13 item 51
+
+//2128. เยอะ in data/best/article.zip(article/article_00005.txt) line 38 item 139
+// 3806. พระเถรานุเถระ in data/best/article.zip(article/article_00013.txt) line 27 item 25
+
+//19191. ปาละเสนะ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00027.txt) line 254 item 17
 
 // Consonants allowed after other consonants to make a single
 // sound
@@ -184,12 +232,14 @@ var ConsonantsAllowedAfterHoHip = NewSetFromSlice([]rune{
 // "โบราณ"
 // "เพราะ"
 // "กว่า"
+/*
 var GlidingConsonants = NewSetFromSlice([]rune{
 	'ล',
 	THAI_CHARACTER_PHO_PHAN,
 	THAI_CHARACTER_RO_RUA,
 	THAI_CHARACTER_WO_WAEN,
 })
+*/
 
 func curriedHasClass(r rune) func(GraphemeStack) bool {
 	return func(g GraphemeStack) bool {
@@ -218,7 +268,22 @@ func (s *GStackClusterParser) Initialize() {
 
 	s.compiler.MakeClass("low-consonant-after-ho-hip",
 		func(gs GraphemeStack) bool {
-			return ConsonantsAllowedAfterHoHip.Has(gs.Main)
+			return LowConsonantsAllowedAfterHoHip.Has(gs.Main)
+		})
+
+	s.compiler.MakeClass("consonant-before-gliding-lo-ling",
+		func(gs GraphemeStack) bool {
+			return ConsonantsAllowedBeforeGlidingLoLing.Has(gs.Main)
+		})
+
+	s.compiler.MakeClass("consonant-before-gliding-ro-rua",
+		func(gs GraphemeStack) bool {
+			return ConsonantsAllowedBeforeGlidingRoRua.Has(gs.Main)
+		})
+
+	s.compiler.MakeClass("consonant-before-gliding-wo-waen",
+		func(gs GraphemeStack) bool {
+			return ConsonantsAllowedBeforeGlidingWoWaen.Has(gs.Main)
 		})
 
 	/*
@@ -513,12 +578,19 @@ var r_sara_uee = TccRule{
 	},
 }
 
+// TODO - instead of no diacritic, allow this
+// TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 var r_maybe_sandwich_sara_a = TccRule{
 	name: "maybe_sandwich_sara_a",
 	rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:]) " +
 		"(" +
+		// BEGIN possible consonants allowed between sandwich vowels
 		"([:consonant: && !:diacritic-vowel:]) | " +
-		"([:ho_hip: && !:diacritic-vowel:] [:low-consonant-after-ho-hip:]) " +
+		"([:ho_hip: && !:diacritic-vowel:] [:low-consonant-after-ho-hip: && !:diacritic-vowel:]) | " +
+		"([:consonant-before-gliding-lo-ling: && !:diacritic-vowel:] [:lo_ling: && !:diacritic-vowel:]) " +
+		"([:consonant-before-gliding-ro-rua: && !:diacritic-vowel:] [:ro_rua: && !:diacritic-vowel:]) " +
+		"([:consonant-before-gliding-wo-waen: && !:diacritic-vowel:] [:wo_waen: && !:diacritic-vowel:]) " +
+		// END   possible consonants allowed between sandwich vowels
 		")" +
 		"([:sara_a:]?)",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
@@ -538,8 +610,8 @@ var r_maybe_sandwich_sara_a = TccRule{
 			c.Tail = append(c.Tail, input[reg2.Start+1:reg2.End]...)
 		}
 
-		if m.HasGroup(5) {
-			reg3 := m.Group(5)
+		if m.HasGroup(8) {
+			reg3 := m.Group(8)
 			c.Tail = append(c.Tail, input[reg3.Start])
 		}
 
@@ -547,6 +619,9 @@ var r_maybe_sandwich_sara_a = TccRule{
 		return true
 	},
 }
+
+//24319. แอนะล็อก in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00076.txt) line 133 item 10
+//	THAI_CHARACTER_SARA_AE, THAI_CHARACTER_O_ANG, THAI_CHARACTER_NO_NU, THAI_CHARACTER_SARA_A, THAI_CHARACTER_LO_LING, THAI_CHARACTER_MAITAIKHU, THAI_CHARACTER_O_ANG, THAI_CHARACTER_KO_KAI
 
 /*
 // Short vowel sara a patterns

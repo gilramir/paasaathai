@@ -113,6 +113,11 @@ func (s *GraphemeStackParser) GoParse(input string) {
 	go s.parse(normalizedInput)
 }
 
+// TODO
+// should convert e e to ae
+//33026. เเละ in data/best/news.zip(news/news_00038.txt) line 15 item 75
+//	THAI_CHARACTER_SARA_E, THAI_CHARACTER_SARA_E, THAI_CHARACTER_LO_LING, THAI_CHARACTER_SARA_A
+
 func (s *GraphemeStackParser) parse(input string) {
 	defer close(s.Chan)
 	defer s.Wg.Done()

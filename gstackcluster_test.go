@@ -228,6 +228,43 @@ func (s *MySuite) TestClusterTFBp243Short06b(c *C) {
 }
 
 /*
+func (s *MySuite) TestClusterTFBp243Short06c(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "แต่ละ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AE)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_TO_TAO)
+	c.Check(gcs[0].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[0].Tail[0].UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
+	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
+}
+*/
+
+// more todo
+
+// long tests
+
+// sara o
+// TODO 9905. โชวะ in data/best/article.zip(article/article_00084.txt) line 64 item 28
+// TODO 11141. เชโกสโลวะเกีย in data/best/article.zip(article/article_00111.txt) line 38 item 94
+// TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
+// TODO 27401. แล็กโทบะซิลลัส in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00107.txt) line 572 item 18
+// TODO 35100. สโลวะเกีย in data/best/news.zip(news/news_00056.txt) line 102 item 74
+// TODO 42315. ทาวีโกวะ in data/best/novel.zip(novel/novel_00014.txt) line 61 item 24
+// TODO 44014. โผล๊ะ in data/best/novel.zip(novel/novel_00021.txt) line 255 item 62
+
+// best ae..a; 40612, 43914? 44003
+
+// 1109. เกาะติด in data/best/article.zip(article/article_00002.txt) line 100 item 81
+// 1351. เพาะปลูก in data/best/article.zip(article/article_00003.txt) line 30 item 222
+/*
 func (s *MySuite) TestCluster01(c *C) {
 
 	var gcp GStackClusterParser
