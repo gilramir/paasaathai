@@ -188,7 +188,31 @@ func (s *GraphemeStackParser) parse(input string) {
 					gs.UpperDiacritic = r3
 				}
 			}
+		} else if r1 == THAI_CHARACTER_SARA_E && len(input)-(i+decodedBytes) >= 3 {
+
+			r2, r2sz := utf8.DecodeRuneInString(input[i+decodedBytes:])
+			// Not Thai? Next!
+			if !RuneIsThai(r2) {
+				gs.Text = input[i : i+decodedBytes]
+				s.Chan <- gs
+				i += decodedBytes
+				continue
+			} else if r2 == THAI_CHARACTER_SARA_E {
+				// correct spelling mistakes; 2 sara e's == 1 sara ae
+				decodedBytes += r2sz
+				gs.Main = THAI_CHARACTER_SARA_AE
+				gs.Text = string(THAI_CHARACTER_SARA_AE)
+				s.Chan <- gs
+				i += decodedBytes
+				continue
+			} else {
+				gs.Text = input[i : i+decodedBytes]
+				s.Chan <- gs
+				i += decodedBytes
+				continue
+			}
 		}
+
 		// At this point we have 2 or 3 code points.
 		gs.Text = input[i : i+decodedBytes]
 		s.Chan <- gs

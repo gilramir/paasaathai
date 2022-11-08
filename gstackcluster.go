@@ -217,6 +217,8 @@ var ConsonantsAllowedBeforeGlidingWoWaen = NewSetFromSlice([]rune{
 	THAI_CHARACTER_KHO_KHAI,
 })
 
+//var ConsonantsAllowedAfterGlidingSoSuea = NewSetFromSlice([]rune{
+
 // TODO chepa!
 // 1754. เฉพาะเจาะจง in data/best/article.zip(article/article_00004.txt) line 13 item 51
 
@@ -585,16 +587,16 @@ var r_sara_uee = TccRule{
 var r_maybe_sandwich_sara_a = TccRule{
 	name: "maybe_sandwich_sara_a",
 	rs: "([:sara e:] | [:sara ae:] | [:sara o:]) " +
-		"(" +
+		"(?P<consonant>" +
 		// BEGIN possible consonants allowed between sandwich vowels
 		"([:consonant: && !:diacritic vowel:]) | " +
 		"([:ho hip: && !:diacritic vowel:] [:low consonant after ho hip: && !:diacritic vowel:]) | " +
-		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && !:diacritic vowel:]) " +
-		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && !:diacritic vowel:]) " +
+		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && !:diacritic vowel:]) |" +
+		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && !:diacritic vowel:]) |" +
 		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && !:diacritic vowel:]) " +
 		// END   possible consonants allowed between sandwich vowels
 		")" +
-		"([:sara a:]?)",
+		"(?P<sara a>[:sara a:]?)",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -605,16 +607,16 @@ var r_maybe_sandwich_sara_a = TccRule{
 		fmt.Printf("reg1: %v\n", reg1)
 		c.FrontVowel = input[reg1.Start]
 
-		reg2 := m.Group(2)
-		fmt.Printf("reg2: %v\n", reg1)
-		c.FirstConsonant = input[reg2.Start]
-		if reg2.Length() > 1 {
-			c.Tail = append(c.Tail, input[reg2.Start+1:reg2.End]...)
+		regc := m.GroupName("consonant")
+		fmt.Printf("reg consonant: %v\n", regc)
+		c.FirstConsonant = input[regc.Start]
+		if regc.Length() > 1 {
+			c.Tail = append(c.Tail, input[regc.Start+1:regc.End]...)
 		}
 
-		if m.HasGroup(8) {
-			reg3 := m.Group(8)
-			c.Tail = append(c.Tail, input[reg3.Start])
+		if m.HasGroupName("sara a") {
+			rega := m.GroupName("sara a")
+			c.Tail = append(c.Tail, input[rega.Start])
 		}
 
 		*length = m.Length()

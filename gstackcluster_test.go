@@ -227,13 +227,13 @@ func (s *MySuite) TestClusterTFBp243Short06b(c *C) {
 	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
 }
 
-/*
 func (s *MySuite) TestClusterTFBp243Short06c(c *C) {
 
 	var gcp GStackClusterParser
 	gcp.Initialize()
 	input := "แต่ละ"
 	gs := ParseGraphemeStacks(input)
+	//fmt.Printf("got %+v\n", gs)
 	gcs := gcp.ParseGraphemeStacks(gs)
 
 	c.Assert(len(gcs), Equals, 1)
@@ -242,10 +242,8 @@ func (s *MySuite) TestClusterTFBp243Short06c(c *C) {
 	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_TO_TAO)
 	c.Check(gcs[0].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
 	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_LO_LING)
-	c.Check(gcs[0].Tail[0].UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
 	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
 }
-*/
 
 // more todo
 

@@ -1,6 +1,8 @@
 package paasaathai
 
 import (
+	"fmt"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -51,13 +53,12 @@ func (s *MySuite) TestGraphemeStack03(c *C) {
 	c.Assert(len([]rune(input)), Equals, 5)
 
 	gstacks := ParseGraphemeStacks(input)
-	c.Assert(len(gstacks), Equals, 5)
+	c.Assert(len(gstacks), Equals, 4)
 
-	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_SARA_E)
-	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_SARA_E)
-	c.Check(gstacks[2].Main, Equals, THAI_CHARACTER_SARA_II)
-	c.Check(gstacks[3].Main, Equals, THAI_CHARACTER_YO_YAK)
-	c.Check(gstacks[4].Main, Equals, THAI_CHARACTER_WO_WAEN)
+	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_SARA_AE)
+	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_SARA_II)
+	c.Check(gstacks[2].Main, Equals, THAI_CHARACTER_YO_YAK)
+	c.Check(gstacks[3].Main, Equals, THAI_CHARACTER_WO_WAEN)
 
 }
 
@@ -145,4 +146,17 @@ func (s *MySuite) TestGraphemeStack08(c *C) {
 
 	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_O_ANG)
 	c.Check(gstacks[0].DiacriticVowel, Equals, THAI_CHARACTER_SARA_UE)
+}
+
+// Handle sara e sara e -> sara ae correction
+func (s *MySuite) TestGraphemeStack09(c *C) {
+	input := string([]rune{THAI_CHARACTER_SARA_E, THAI_CHARACTER_SARA_E, THAI_CHARACTER_TO_TAO})
+	c.Assert(len([]rune(input)), Equals, 3)
+
+	gstacks := ParseGraphemeStacks(input)
+	fmt.Printf("got: %+v\n", gstacks)
+	c.Assert(len(gstacks), Equals, 2)
+
+	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_SARA_AE)
+	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_TO_TAO)
 }
