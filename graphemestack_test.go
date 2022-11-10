@@ -132,7 +132,7 @@ func (s *MySuite) TestGraphemeStack07(c *C) {
 	c.Assert(len(gstacks), Equals, 1)
 
 	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_KO_KAI)
-	c.Check(gstacks[0].DiacriticVowel, Equals, THAI_CHARACTER_MAITAIKHU)
+	c.Check(gstacks[0].UpperDiacritic, Equals, THAI_CHARACTER_MAITAIKHU)
 }
 
 // Handle "อึ"

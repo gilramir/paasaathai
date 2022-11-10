@@ -312,7 +312,7 @@ func (s *MySuite) TestClusterTFBp243Long06b(c *C) {
 	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NGO_NGU)
 }
 
-// long tests
+// TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
 // sara o
 // TODO 9905. โชวะ in data/best/article.zip(article/article_00084.txt) line 64 item 28

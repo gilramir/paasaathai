@@ -92,15 +92,14 @@ func RuneIsUpperPosition(r rune) bool {
 }
 
 // We don't consider THAI_CHARACTER_SARA_AM to be upper; we call it mid
-// We do consider THAI_CHARACTER_MAITAIKHU to be an upper vowel, since Unicode
-// does.
+// Even though Unicode classifies THAI_CHARACTER_MAITAIKHU as an upper vowel,
+// we don't. For us, it's an UpperPositionSign.
 func RuneIsUpperPositionVowel(r rune) bool {
 	return r == THAI_CHARACTER_MAI_HAN_AKAT ||
 		r == THAI_CHARACTER_SARA_I ||
 		r == THAI_CHARACTER_SARA_II ||
 		r == THAI_CHARACTER_SARA_UE ||
-		r == THAI_CHARACTER_SARA_UEE ||
-		r == THAI_CHARACTER_MAITAIKHU
+		r == THAI_CHARACTER_SARA_UEE
 }
 
 // We consider THAI_CHARACTER_SARA_AM to be a mid position vowel
@@ -149,7 +148,9 @@ func RuneIsSign(r rune) bool {
 func RuneIsUpperPositionSign(r rune) bool {
 	return r == THAI_CHARACTER_THANTHAKHAT || // used in Thai
 		r == THAI_CHARACTER_NIKHAHIT || // used in Sanskrit?
-		r == THAI_CHARACTER_YAMAKKAN // used where?
+		r == THAI_CHARACTER_YAMAKKAN || // used where?
+		// MAITAIKHU shortens the vowel sound; it's not a vowel for us.
+		r == THAI_CHARACTER_MAITAIKHU
 }
 
 func RuneIsMidPositionSign(r rune) bool {
