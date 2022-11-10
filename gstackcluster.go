@@ -179,31 +179,26 @@ var LowConsonantsAllowedAfterHoHip = NewSetFromSlice([]rune{
 	'ย', 'ร', 'ล', 'ว',
 })
 
-// TODO check yo ying 40156. เผียะ in data/best/novel.zip(novel/novel_00001.txt) line 331 item 4
-
 // Consonants that can glide with lo ling
-// แต่ละ in data/best/article.zip(article/article_00001.txt) line 14 item 40
-// แคระแกร็น in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00003.txt) line 344 item 6
-// ตบแผละ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00023.txt) line 25 item 11
-// แกละ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00023.txt) line 326 item 2
-// TODO check not gliding 38296. หมู่บ้านการเคหะร่มเกล้า in data/best/news.zip(news/news_00080.txt) line 20 item 121
-// TODO check not gliding 47608. เพคะ in data/best/novel.zip(novel/novel_00071.txt) line 52 item 3
-
 var ConsonantsAllowedBeforeGlidingLoLing = NewSetFromSlice([]rune{
-	THAI_CHARACTER_TO_TAO,
 	THAI_CHARACTER_KHO_KHWAI,
 	THAI_CHARACTER_PHO_PHUNG,
 	THAI_CHARACTER_KO_KAI,
 })
 
+// 2 TODO check yo ying 40156. เผียะ in data/best/novel.zip(novel/novel_00001.txt) line 331 item 4
+// 2 TODO check not gliding 38296. หมู่บ้านการเคหะร่มเกล้า in data/best/news.zip(news/news_00080.txt) line 20 item 121
+// 2 TODO check not gliding 47608. เพคะ in data/best/novel.zip(novel/novel_00071.txt) line 52 item 3
+
 // Consonants that can glide with ro rua
-// แกระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00026.txt) line 177 item 18
-// ว่านหางนกยูงแคระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00030.txt) line 133 item 38
-// TODO 33902. แม่ระมาด in data/best/news.zip(news/news_00045.txt) line 91 item 33
-// TODO 40612. แสยะ in data/best/novel.zip(novel/novel_00004.txt) line 11 item 22
-// TODO 11829. รัฐอิสลามอเสระ in data/best/article.zip(article/article_00123.txt) line 64 item 58
-// แประ in data/best/novel.zip(novel/novel_00021.txt) line 238 item 37
-// พระเถรานุเถระ in data/best/article.zip(article/article_00013.txt) line 27 item 25
+// 1 แกระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00026.txt) line 177 item 18
+// 1 แคระแกร็น in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00003.txt) line 344 item 6
+// 1 ว่านหางนกยูงแคระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00030.txt) line 133 item 38
+// 1 แประ in data/best/novel.zip(novel/novel_00021.txt) line 238 item 37
+// 2 พระเถรานุเถระ in data/best/article.zip(article/article_00013.txt) line 27 item 25
+// 2 TODO 33902. แม่ระมาด in data/best/news.zip(news/news_00045.txt) line 91 item 33
+// 2 TODO 40612. แสยะ in data/best/novel.zip(novel/novel_00004.txt) line 11 item 22
+// 2 TODO 11829. รัฐอิสลามอเสระ in data/best/article.zip(article/article_00123.txt) line 64 item 58
 var ConsonantsAllowedBeforeGlidingRoRua = NewSetFromSlice([]rune{
 	THAI_CHARACTER_KO_KAI,
 	THAI_CHARACTER_KHO_KHWAI,
@@ -212,7 +207,7 @@ var ConsonantsAllowedBeforeGlidingRoRua = NewSetFromSlice([]rune{
 })
 
 // Consonants that can glide with wo waen
-// แขวะ in data/best/news.zip(news/news_00008.txt) line 93 item 2
+// 1 แขวะ in data/best/news.zip(news/news_00008.txt) line 93 item 2
 var ConsonantsAllowedBeforeGlidingWoWaen = NewSetFromSlice([]rune{
 	THAI_CHARACTER_KHO_KHAI,
 })
@@ -225,7 +220,7 @@ var ConsonantsAllowedBeforeGlidingWoWaen = NewSetFromSlice([]rune{
 //2128. เยอะ in data/best/article.zip(article/article_00005.txt) line 38 item 139
 // 3806. พระเถรานุเถระ in data/best/article.zip(article/article_00013.txt) line 27 item 25
 
-//19191. ปาละเสนะ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00027.txt) line 254 item 17
+// 2 19191. ปาละเสนะ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00027.txt) line 254 item 17
 
 // Consonants allowed after other consonants to make a single
 // sound
@@ -472,7 +467,8 @@ next_input:
 			matched := rule.ck(&rule, input, i, &length, &c)
 			if matched {
 				c.MatchingRule = rule.name
-				fmt.Printf("matched: %s %s %s\n", rule.name, rule.rs, c.Repr())
+				fmt.Printf("matched: %s @i=%d length=%d %s\n",
+					rule.name, i, length, c.Repr())
 				clusters = append(clusters, c)
 				i += length
 				continue next_input

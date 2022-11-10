@@ -199,7 +199,6 @@ func (s *MySuite) TestClusterTFBp243Short06a(c *C) {
 	var gcp GStackClusterParser
 	gcp.Initialize()
 	input := "และ"
-	//input :=  "แหล่ะ"
 	gs := ParseGraphemeStacks(input)
 	gcs := gcp.ParseGraphemeStacks(gs)
 
@@ -227,20 +226,54 @@ func (s *MySuite) TestClusterTFBp243Short06b(c *C) {
 	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
 }
 
+// TO_TAO doesn't glide with LO LING
 func (s *MySuite) TestClusterTFBp243Short06c(c *C) {
 
 	var gcp GStackClusterParser
 	gcp.Initialize()
 	input := "แต่ละ"
 	gs := ParseGraphemeStacks(input)
-	//fmt.Printf("got %+v\n", gs)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AE)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_TO_TAO)
+	c.Check(gcs[0].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[1].Tail[0].Main, Equals, THAI_CHARACTER_SARA_A)
+}
+
+func (s *MySuite) TestClusterTFBp243Short06d(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "ตบแผละ"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 3)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_TO_TAO)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_BO_BAIMAI)
+	c.Check(gcs[2].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AE)
+	c.Check(gcs[2].FirstConsonant.Main, Equals, THAI_CHARACTER_PHO_PHUNG)
+	c.Check(gcs[2].Tail[0].Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[2].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
+}
+
+func (s *MySuite) TestClusterTFBp243Short06e(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "แกละ"
+	gs := ParseGraphemeStacks(input)
 	gcs := gcp.ParseGraphemeStacks(gs)
 
 	c.Assert(len(gcs), Equals, 1)
 
 	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AE)
-	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_TO_TAO)
-	c.Check(gcs[0].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_KO_KAI)
 	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_LO_LING)
 	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
 }
