@@ -194,6 +194,7 @@ func (s *MySuite) TestClusterTFBp243Long05a(c *C) {
 	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NGO_NGU)
 }
 
+// LO LING by itself
 func (s *MySuite) TestClusterTFBp243Short06a(c *C) {
 
 	var gcp GStackClusterParser
@@ -209,6 +210,7 @@ func (s *MySuite) TestClusterTFBp243Short06a(c *C) {
 	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_SARA_A)
 }
 
+// HO HIP and LO LING
 func (s *MySuite) TestClusterTFBp243Short06b(c *C) {
 
 	var gcp GStackClusterParser
@@ -244,6 +246,7 @@ func (s *MySuite) TestClusterTFBp243Short06c(c *C) {
 	c.Check(gcs[1].Tail[0].Main, Equals, THAI_CHARACTER_SARA_A)
 }
 
+// PHO PHUNG and LO LING
 func (s *MySuite) TestClusterTFBp243Short06d(c *C) {
 
 	var gcp GStackClusterParser
@@ -262,6 +265,7 @@ func (s *MySuite) TestClusterTFBp243Short06d(c *C) {
 	c.Check(gcs[2].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
 }
 
+// KO KAI and LO LING
 func (s *MySuite) TestClusterTFBp243Short06e(c *C) {
 
 	var gcp GStackClusterParser
@@ -292,6 +296,7 @@ func (s *MySuite) TestClusterTFBp243Long06a(c *C) {
 	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_KO_KAI)
 }
 
+// PO PLA and LO LING
 func (s *MySuite) TestClusterTFBp243Long06b(c *C) {
 	var gcp GStackClusterParser
 	gcp.Initialize()
