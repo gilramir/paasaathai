@@ -278,7 +278,39 @@ func (s *MySuite) TestClusterTFBp243Short06e(c *C) {
 	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
 }
 
-// more todo
+func (s *MySuite) TestClusterTFBp243Long06a(c *C) {
+
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "แก"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AE)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_KO_KAI)
+}
+
+func (s *MySuite) TestClusterTFBp243Long06b(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "แปลง"
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	/*
+		fmt.Printf("0: %+v\n", gcs[0])
+		fmt.Printf("1: %+v\n", gcs[1])
+		fmt.Printf("2: %+v\n", gcs[2])
+	*/
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AE)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_PO_PLA)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NGO_NGU)
+}
 
 // long tests
 

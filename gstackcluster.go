@@ -181,9 +181,10 @@ var LowConsonantsAllowedAfterHoHip = NewSetFromSlice([]rune{
 
 // Consonants that can glide with lo ling
 var ConsonantsAllowedBeforeGlidingLoLing = NewSetFromSlice([]rune{
+	THAI_CHARACTER_KO_KAI,
 	THAI_CHARACTER_KHO_KHWAI,
 	THAI_CHARACTER_PHO_PHUNG,
-	THAI_CHARACTER_KO_KAI,
+	THAI_CHARACTER_PO_PLA,
 })
 
 // 2 TODO check yo ying 40156. เผียะ in data/best/novel.zip(novel/novel_00001.txt) line 331 item 4
