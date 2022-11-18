@@ -536,7 +536,6 @@ func (s *MySuite) TestClusterTFBp243Long12a(c *C) {
 	var gcp GStackClusterParser
 	gcp.Initialize()
 	input := "เฟ้อ"
-	//	THAI_CHARACTER_SARA_E, THAI_CHARACTER_FO_FAN, THAI_CHARACTER_MAI_THO, THAI_CHARACTER_O_ANG
 
 	gs := ParseGraphemeStacks(input)
 	gcs := gcp.ParseGraphemeStacks(gs)
@@ -547,6 +546,24 @@ func (s *MySuite) TestClusterTFBp243Long12a(c *C) {
 	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_FO_FAN)
 	c.Check(gcs[0].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_THO)
 	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_O_ANG)
+}
+
+func (s *MySuite) TestClusterTFBp250MedialEr(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "เพลิง"
+	//        THAI_CHARACTER_SARA_E, THAI_CHARACTER_PHO_PHAN, THAI_CHARACTER_LO_LING, THAI_CHARACTER_SARA_I, THAI_CHARACTER_NGO_NGU
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_E)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_PHO_PHAN)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[0].Tail[0].DiacriticVowel, Equals, THAI_CHARACTER_SARA_I)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NGO_NGU)
 }
 
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
