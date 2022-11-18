@@ -383,6 +383,7 @@ func (s *GStackClusterParser) Initialize() {
 	r_short_o_ang.CompileWith(&s.compiler)
 	r_sara_a_aa.CompileWith(&s.compiler)
 	r_sara_uee.CompileWith(&s.compiler)
+	r_ua.CompileWith(&s.compiler)
 	/*
 		r_final_pos_short_1.CompileWith(&s.compiler)
 		r_final_pos_short_3.CompileWith(&s.compiler)
@@ -431,6 +432,7 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_maybe_sandwich_sara_a,
 		r_sara_a_aa,
 		r_sara_uee,
+		r_ua,
 		r_single_diacritic_vowel, // this comes after other vowels
 		r_single_consonant,       // this needs to be the last rule
 	}
@@ -564,7 +566,7 @@ var r_single_diacritic_vowel = TccRule{
 
 var r_sara_uee = TccRule{
 	name: "sara_uee",
-	rs:   "([:consonant: && :sara uee:]) ([:o ang:])",
+	rs:   "([:consonant: && (:sara uee: || !:diacritic vowel:)]) ([:o ang:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
@@ -584,6 +586,35 @@ var r_sara_uee = TccRule{
 
 		reg2 := m.Group(2)
 		c.Tail = append(c.Tail, input[reg2.Start])
+
+		*length = m.Length()
+		return true
+	},
+}
+
+// short and long ua
+var r_ua = TccRule{
+	name: "ua",
+	rs:   "([:consonant: && :mai han akat:]) ([:wo waen:] [:sara a:]?)",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		/*
+			reg1 := m.Group(1)
+			if !reg1.Empty() {
+				assertGroupLength(reg1, 1)
+				c.FrontVowel = input[reg1.Start]
+			}
+		*/
+
+		reg1 := m.Group(1)
+		c.FirstConsonant = input[reg1.Start]
+
+		reg2 := m.Group(2)
+		c.Tail = append(c.Tail, input[reg2.Start:reg2.End]...)
 
 		*length = m.Length()
 		return true

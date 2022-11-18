@@ -394,6 +394,55 @@ func (s *MySuite) TestClusterTFBp243Short08a(c *C) {
 	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
 }
 
+func (s *MySuite) TestClusterTFBp243Long08a(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "ก่อน"
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_KO_KAI)
+	c.Check(gcs[0].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NO_NU)
+}
+
+func (s *MySuite) TestClusterTFBp243Short09a(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+
+	input := "ลัวะ"
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[0].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_MAI_HAN_AKAT)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_WO_WAEN)
+	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_A)
+}
+
+func (s *MySuite) TestClusterTFBp243Long09a(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "กลัว"
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_KO_KAI)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_LO_LING)
+	c.Check(gcs[1].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_MAI_HAN_AKAT)
+	c.Check(gcs[1].Tail[0].Main, Equals, THAI_CHARACTER_WO_WAEN)
+}
+
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
 // sara o
