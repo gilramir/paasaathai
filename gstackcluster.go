@@ -383,6 +383,7 @@ func (s *GStackClusterParser) Initialize() {
 
 	r_maybe_sandwich_sara_a.CompileWith(&s.compiler)
 	r_sandwich_ia.CompileWith(&s.compiler)
+	r_sandwich_ueea.CompileWith(&s.compiler)
 	r_short_o_ang.CompileWith(&s.compiler)
 	r_sara_a_aa.CompileWith(&s.compiler)
 	r_sara_uee.CompileWith(&s.compiler)
@@ -431,8 +432,9 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 	clusters := make([]GStackCluster, 0, estimatedAllocation)
 
 	rules := []TccRule{
-		r_short_o_ang, // must come before maybe_sandwich_sara_a
-		r_sandwich_ia, // must come before maybe_sandwich_sara_a
+		r_short_o_ang,   // must come before maybe_sandwich_sara_a
+		r_sandwich_ia,   // must come before maybe_sandwich_sara_a
+		r_sandwich_ueea, // must come before maybe_sandwich_sara_a
 		r_maybe_sandwich_sara_a,
 		r_sara_a_aa,
 		r_sara_uee,
@@ -712,6 +714,42 @@ var r_sandwich_ia = TccRule{
 		// END   possible consonants allowed between sandwich vowels
 		")" +
 		"(?P<tail>[:yo yak:] [:sara a:]?)",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Group(1)
+		c.FrontVowel = input[reg1.Start]
+
+		regc := m.GroupName("consonant")
+		c.FirstConsonant = input[regc.Start]
+		if regc.Length() > 1 {
+			c.Tail = append(c.Tail, input[regc.Start+1:regc.End]...)
+		}
+
+		regt := m.GroupName("tail")
+		c.Tail = append(c.Tail, input[regt.Start:regt.End]...)
+
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_sandwich_ueea = TccRule{
+	name: "sandwich_ueea",
+	rs: "([:sara e:]) " +
+		"(?P<consonant>" +
+		// BEGIN possible consonants allowed between sandwich vowels
+		"([:consonant: && :sara uee:]) | " +
+		"([:bare ho hip:] [:low consonant after ho hip: && :sara uee:]) | " +
+		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && :sara uee:]) |" +
+		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && :sara uee:]) |" +
+		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && :sara uee:]) " +
+		// END   possible consonants allowed between sandwich vowels
+		")" +
+		"(?P<tail>[:o ang:] [:sara a:]?)",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {

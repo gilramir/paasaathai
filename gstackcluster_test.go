@@ -466,7 +466,6 @@ func (s *MySuite) TestClusterTFBp243Long10a(c *C) {
 	gcp.Initialize()
 	input := "เงียบ"
 
-	//	THAI_CHARACTER_SARA_E, THAI_CHARACTER_NGO_NGU, THAI_CHARACTER_SARA_II, THAI_CHARACTER_YO_YAK, THAI_CHARACTER_BO_BAIMAI
 	gs := ParseGraphemeStacks(input)
 	gcs := gcp.ParseGraphemeStacks(gs)
 
@@ -477,6 +476,45 @@ func (s *MySuite) TestClusterTFBp243Long10a(c *C) {
 	c.Check(gcs[0].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_II)
 	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_YO_YAK)
 	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_BO_BAIMAI)
+}
+
+/*
+TODO - can't find an example
+func (s *MySuite) TestClusterTFBp243Short11a(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "เมือง"
+	//	THAI_CHARACTER_SARA_E, THAI_CHARACTER_MO_MA, THAI_CHARACTER_SARA_UEE, THAI_CHARACTER_O_ANG, THAI_CHARACTER_NGO_NGU
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_E)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_MO_MA)
+	c.Check(gcs[0].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_UEE)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NGO_NGU)
+}
+*/
+
+func (s *MySuite) TestClusterTFBp243Long11a(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "เมือง"
+	//	THAI_CHARACTER_SARA_E, THAI_CHARACTER_MO_MA, THAI_CHARACTER_SARA_UEE, THAI_CHARACTER_O_ANG, THAI_CHARACTER_NGO_NGU
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_E)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_MO_MA)
+	c.Check(gcs[0].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_UEE)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NGO_NGU)
 }
 
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
