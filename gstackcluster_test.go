@@ -650,6 +650,24 @@ func (s *MySuite) TestClusterSandwichAo(c *C) {
 	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_AA)
 }
 
+func (s *MySuite) TestClusterChaphaw(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+
+	input := "เฉพาะ"
+	//	THAI_CHARACTER_SARA_E, THAI_CHARACTER_CHO_CHING, THAI_CHARACTER_PHO_PHAN, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_SARA_A
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_E)
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_CHO_CHING)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_PHO_PHAN)
+	c.Check(gcs[0].Tail[1].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gcs[0].Tail[2].Main, Equals, THAI_CHARACTER_SARA_A)
+}
+
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
 // sara o
