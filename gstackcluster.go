@@ -393,6 +393,7 @@ func (s *GStackClusterParser) Initialize() {
 	r_short_o_ang.CompileWith(&s.compiler)
 	r_sara_a_aa.CompileWith(&s.compiler)
 	r_sara_uee.CompileWith(&s.compiler)
+	r_sara_ai.CompileWith(&s.compiler)
 	r_medial_er.CompileWith(&s.compiler)
 	r_ua.CompileWith(&s.compiler)
 	r_sara_am.CompileWith(&s.compiler)
@@ -425,6 +426,7 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_sandwich_ia,      // must come before maybe_sandwich_sara_a
 		r_sandwich_ueea_er, // must come before maybe_sandwich_sara_a
 		r_medial_er,        // must come before maybe_sandwich_sara_a
+		r_sara_ai,
 		r_maybe_sandwich_sara_a,
 		r_sara_a_aa,
 		r_sara_uee,
@@ -776,6 +778,38 @@ var r_sandwich_ueea_er = TccRule{
 
 		regt := m.GroupName("tail")
 		c.Tail = append(c.Tail, input[regt.Start:regt.End]...)
+
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_sara_ai = TccRule{
+	name: "sara_ai",
+	rs: "([:sara ai maimuan:] | [:sara ai maimalai:]) " +
+		"(?P<consonant>" +
+		// BEGIN possible consonants allowed between sandwich vowels
+		"([:consonant: && (:sara uee: || !:diacritic vowel:)]) | " +
+		"([:bare ho hip:] [:low consonant after ho hip: && (:sara uee: || !:diacritic vowel:)]) | " +
+		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && (:sara uee: || !:diacritic vowel:)]) |" +
+		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && (:sara uee: || !:diacritic vowel:)]) |" +
+		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && (:sara uee: || !:diacritic vowel:)]) " +
+		// END   possible consonants allowed between sandwich vowels
+		")",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Group(1)
+		c.FrontVowel = input[reg1.Start]
+
+		regc := m.GroupName("consonant")
+		c.FirstConsonant = input[regc.Start]
+		if regc.Length() > 1 {
+			c.Tail = append(c.Tail, input[regc.Start+1:regc.End]...)
+		}
 
 		*length = m.Length()
 		return true

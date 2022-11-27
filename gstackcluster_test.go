@@ -617,6 +617,22 @@ func (s *MySuite) TestClusterPunctuation(c *C) {
 	c.Check(gcs[5].SingleMidSign.Main, Equals, THAI_CHARACTER_PAIYANNOI)
 }
 
+func (s *MySuite) TestClusterSaraAi(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "กำไร"
+	//THAI_CHARACTER_KO_KAI, THAI_CHARACTER_SARA_AM, THAI_CHARACTER_SARA_AI_MAIMALAI, THAI_CHARACTER_RO_RUA
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+	c.Assert(len(gcs), Equals, 2)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_KO_KAI)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_SARA_AM)
+	c.Check(gcs[1].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AI_MAIMALAI)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_RO_RUA)
+}
+
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
 // sara o
@@ -666,71 +682,5 @@ func (s *MySuite) TestCluster02(c *C) {
 	c.Check(gcs[0].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_UEE)
 	c.Check(gcs[0].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_EK)
 	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_O_ANG)
-}
-8?
-//	input := "เมตตา"
-/*
-func (s *MySuite) TestCCCase01(c *C) {
-	// 6. "กรรม", [ gamM], deed; kamma; karma; sin; bad karma earned
-	rnames := []rune{THAI_CHARACTER_KO_KAI, THAI_CHARACTER_RO_RUA, THAI_CHARACTER_RO_RUA, THAI_CHARACTER_MO_MA}
-	input := string(rnames)
-
-	gstacks := ParseGraphemeStacks(input)
-	c.Assert(gstacks, HasLen, 4)
-*/
-/*
-	ccs := ParseGStackClustersFromGraphemeStacks(gstacks)
-	c.Assert(ccs, HasLen, 1)
-
-	var cc *GStackCluster
-	cc = ccs[0]
-	c.Check(cc.IsThai, Equals, true)
-	c.Check(cc.IsValidThai, Equals, true)
-	c.Check(cc.FirstConsonant.Runes[0], Equals, THAI_CHARACTER_KO_KAI)
-	c.Check(cc.Tail, HasLen, 3)
-	c.Check(cc.Tail[0].Runes[0], Equals, THAI_CHARACTER_RO_RUA)
-	c.Check(cc.Tail[1].Runes[0], Equals, THAI_CHARACTER_RO_RUA)
-	c.Check(cc.Tail[2].Runes[0], Equals, THAI_CHARACTER_MO_MA)
-*/
-//}
-
-// input := "พิสูจนไดคะ"
-
-// "ก็"
-/*
-func (s *MySuite) TestCC01(c *C) {
-
-	// THAI_CHARACTER_KO_KAI, THAI_CHARACTER_MAITAIKHU
-	input := "ก็"
-	gstacks := ParseGraphemeStacks(input)
-	c.Assert(len(gstacks), Equals, 1)
-
-	ccs := ParseGStackClustersFromGraphemeStacks(gstacks)
-	c.Assert(len(ccs), Equals, 1)
-
-	cc := ccs[0]
-	c.Check(cc.IsThai, Equals, true)
-	c.Check(cc.IsValidThai, Equals, true)
-	c.Check(len(cc.FirstConsonant.Runes), Equals, 2)
-	c.Check(cc.FirstConsonant.HasUpperPositionVowel(), Equals, true)
-}
-
-func (s *MySuite) TestCC02(c *C) {
-
-	// THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_UE
-	input := "อึ"
-	//fmt.Println(StringToRuneNames(input))
-
-	gstacks := ParseGraphemeStacks(input)
-	c.Assert(len(gstacks), Equals, 1)
-
-	ccs := ParseGStackClustersFromGraphemeStacks(gstacks)
-	c.Assert(len(ccs), Equals, 1)
-
-	cc := ccs[0]
-	c.Check(cc.IsThai, Equals, true)
-	c.Check(cc.IsValidThai, Equals, true)
-	c.Check(len(cc.FirstConsonant.Runes), Equals, 2)
-	c.Check(cc.FirstConsonant.HasUpperPositionVowel(), Equals, true)
 }
 */
