@@ -582,7 +582,7 @@ func (s *MySuite) TestClusterSaraAm(c *C) {
 	c.Check(gcs[2].FirstConsonant.Main, Equals, THAI_CHARACTER_NO_NU)
 	c.Check(gcs[2].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_MAI_HAN_AKAT)
 	c.Check(gcs[2].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_MAI_THO)
-	c.Check(gcs[3].FirstConsonant.Main, Equals, THAI_CHARACTER_NO_NU)
+	c.Check(gcs[2].Tail[0].Main, Equals, THAI_CHARACTER_NO_NU)
 
 }
 

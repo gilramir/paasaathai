@@ -790,7 +790,7 @@ var r_sandwich_ao = TccRule{
 var r_single_diacritic_vowel = TccRule{
 	name: "single_diacritic_vowel",
 	rs: "([:consonant: && " +
-		"(:sara i: || :sara ii: || :sara ue: || :sara u: || :sara uu:) ])",
+		"(:sara i: || :sara ii: || :sara uee: || :sara ue: || :sara u: || :sara uu:) ])",
 	/*
 		rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:])? " +
 			"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])? " +
