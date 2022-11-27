@@ -335,6 +335,11 @@ func (s *GStackClusterParser) Initialize() {
 			return RuneIsMidPositionVowel(gs.Main)
 		})
 
+	s.compiler.MakeClass("mid position sign",
+		func(gs GraphemeStack) bool {
+			return RuneIsMidPositionSign(gs.Main)
+		})
+
 	// regex identity classes for:
 	// digits, non-diacritic vowels, currency, and other mid-position signs
 	// for consonant, prefix with "bare "
@@ -394,6 +399,7 @@ func (s *GStackClusterParser) Initialize() {
 	r_mai_han_akat.CompileWith(&s.compiler)
 	r_single_diacritic_vowel.CompileWith(&s.compiler)
 	r_single_consonant.CompileWith(&s.compiler)
+	r_punctuation.CompileWith(&s.compiler)
 }
 
 func assertGroupLength(reg objregexp.Range, length int) {
@@ -426,7 +432,8 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_sara_am,
 		r_mai_han_akat,
 		r_single_diacritic_vowel, // this comes after other vowels
-		r_single_consonant,       // this needs to be the last rule
+		r_single_consonant,       // this needs to be the last consonant rule
+		r_punctuation,
 	}
 
 next_input:
@@ -819,8 +826,23 @@ var r_single_consonant = TccRule{
 		if !m.Success {
 			return false
 		}
-		*c = makeCluster(input[i : i+1])
+		*c = makeCluster(input[i : i+m.Length()])
 		c.FirstConsonant = input[i]
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_punctuation = TccRule{
+	name: "punctuation",
+	rs:   "[:mid position sign:]",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		c.SingleMidSign = input[i]
 		*length = m.Length()
 		return true
 	},

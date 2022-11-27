@@ -604,6 +604,19 @@ func (s *MySuite) TestClusterMaiHanAkat(c *C) {
 
 }
 
+func (s *MySuite) TestClusterPunctuation(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "กรุงเทพฯ"
+	//	THAI_CHARACTER_KO_KAI, THAI_CHARACTER_RO_RUA, THAI_CHARACTER_SARA_U, THAI_CHARACTER_NGO_NGU, THAI_CHARACTER_SARA_E, THAI_CHARACTER_THO_THAHAN, THAI_CHARACTER_PHO_PHAN, THAI_CHARACTER_PAIYANNOI
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+	c.Assert(len(gcs), Equals, 6)
+
+	c.Check(gcs[5].SingleMidSign.Main, Equals, THAI_CHARACTER_PAIYANNOI)
+}
+
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
 // sara o
