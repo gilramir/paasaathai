@@ -668,6 +668,33 @@ func (s *MySuite) TestClusterChaphaw(c *C) {
 	c.Check(gcs[0].Tail[2].Main, Equals, THAI_CHARACTER_SARA_A)
 }
 
+func (s *MySuite) TestClusterOAngConsonant(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+
+	input := "ราชอาณาจักรไทย"
+	//	THAI_CHARACTER_RO_RUA, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_CHO_CHANG, THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_NO_NEN, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_CHO_CHAN, THAI_CHARACTER_MAI_HAN_AKAT, THAI_CHARACTER_KO_KAI, THAI_CHARACTER_RO_RUA, THAI_CHARACTER_SARA_AI_MAIMALAI, THAI_CHARACTER_THO_THAHAN, THAI_CHARACTER_YO_YAK
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+	c.Assert(len(gcs), Equals, 8)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_RO_RUA)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_CHO_CHANG)
+	c.Check(gcs[2].FirstConsonant.Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gcs[2].Tail[0].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gcs[3].FirstConsonant.Main, Equals, THAI_CHARACTER_NO_NEN)
+	c.Check(gcs[3].Tail[0].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gcs[4].FirstConsonant.Main, Equals, THAI_CHARACTER_CHO_CHAN)
+	c.Check(gcs[4].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_MAI_HAN_AKAT)
+	c.Check(gcs[4].Tail[0].Main, Equals, THAI_CHARACTER_KO_KAI)
+	c.Check(gcs[5].FirstConsonant.Main, Equals, THAI_CHARACTER_RO_RUA)
+	c.Check(gcs[6].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_AI_MAIMALAI)
+	c.Check(gcs[6].FirstConsonant.Main, Equals, THAI_CHARACTER_THO_THAHAN)
+	c.Check(gcs[7].FirstConsonant.Main, Equals, THAI_CHARACTER_YO_YAK)
+}
+
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
 // sara o

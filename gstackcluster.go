@@ -488,28 +488,26 @@ var r_mai_han_akat = TccRule{
 
 var r_sara_uee = TccRule{
 	name: "sara_uee",
-	rs:   "([:consonant: && (:sara uee: || !:diacritic vowel:)]) ([:o ang:])",
+	// we have to distinguish the O ANG from a subsequent
+	// O ANG that is followed by a vowel
+	rs: "([:consonant: && (:sara uee: || !:diacritic vowel:)])" +
+		"([:o ang: && !:diacritic vowel: && !:tone mark:])" +
+		"([!:mid position vowel:] | $)",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
 			return false
 		}
-		*c = makeCluster(input[i : i+m.Length()])
-		/*
-			reg1 := m.Group(1)
-			if !reg1.Empty() {
-				assertGroupLength(reg1, 1)
-				c.FrontVowel = input[reg1.Start]
-			}
-		*/
-
 		reg1 := m.Group(1)
+		reg2 := m.Group(2)
+		totalLength := reg1.Length() + reg2.Length()
+		*c = makeCluster(input[i : i+totalLength])
+
 		c.FirstConsonant = input[reg1.Start]
 
-		reg2 := m.Group(2)
 		c.Tail = append(c.Tail, input[reg2.Start])
 
-		*length = m.Length()
+		*length = totalLength
 		return true
 	},
 }
