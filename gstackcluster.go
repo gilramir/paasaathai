@@ -107,44 +107,6 @@ type GStackClusterParser struct {
 	compiler objregexp.Compiler[GraphemeStack]
 }
 
-/* The vowel orthograpy patterns from "Thai For Beginners" p. 243
-	short				long
-	pattern	regex			pattern regex
-#1	-ะ	final_pos_short_1	-า	final_pos_long_1
-#2	-ิอิ				-อ๊
-#3					uu_ua
-#4
-#5		final_pos_short_1		final_pos_long_2
-#6		final_pos_short_1		final_pos_long_2
-#7		final_pos_short_1		final_pos_long_2
-#8		eu_o_ao				final_pos_long_1
-#9		ua				ua
-#10		ia				ia
-#11		uu_ua				uu_ua
-#12		eu_o_ao				eu_o_ao
-
-And from p. 244
-
-#1		c_sara_am
-#2		final_pos_long_2
-#3		final_pos_long_2
-#4		eu_o_ao
-#5		eei
-
-And from p. 250
-
-	final				medial
-	pattern	regex			pattern regex
-#1
-#2
-#3
-#4
-#5
-#6
-#7
-
-*/
-
 type TccRule struct {
 	name  string
 	rs    string
@@ -170,9 +132,11 @@ var ConsonantsAllowedAtFront = NewSetFromSlice([]rune{
 
 // The initial O_ANG changes a subsequent
 // consonant into being a MID class consonant.
+/*
 var ConsonantsAllowedAfterOAng = NewSetFromSlice([]rune{
 	'ย',
 })
+*/
 
 // The initial HO_HIP changes a subsequent
 // consonant into being a HIGH class consonant.
@@ -293,38 +257,6 @@ func (s *GStackClusterParser) Initialize() {
 			return ConsonantsAllowedBeforeGlidingWoWaen.Has(gs.Main)
 		})
 
-	/*
-		s.compiler.MakeClass("has-sara-i",
-			func(gs GraphemeStack) bool {
-				return gs.DiacriticVowel == THAI_CHARACTER_SARA_I
-			})
-
-		s.compiler.MakeClass("has-sara-ii",
-			func(gs GraphemeStack) bool {
-				return gs.DiacriticVowel == THAI_CHARACTER_SARA_II
-			})
-
-		s.compiler.MakeClass("has-sara-uee",
-			func(gs GraphemeStack) bool {
-				return gs.DiacriticVowel == THAI_CHARACTER_SARA_UEE
-			})
-
-		s.compiler.MakeClass("has-mai-han-akat",
-			func(gs GraphemeStack) bool {
-				return gs.DiacriticVowel == THAI_CHARACTER_MAI_HAN_AKAT
-			})
-
-		s.compiler.MakeClass("has-maithaku",
-			func(gs GraphemeStack) bool {
-				return RuneIsConsonant(gs.Main) && gs.DiacriticVowel == THAI_CHARACTER_MAITAIKHU
-			})
-	*/
-	/*
-		s.compiler.MakeClass("sliding-consonant",
-			func(gs GraphemeStack) bool {
-				return GlidingConsonants.Has(gs.Main)
-			})
-	*/
 	s.compiler.MakeClass("front position vowel",
 		func(gs GraphemeStack) bool {
 			return RuneIsFrontPositionVowel(gs.Main)
@@ -398,6 +330,7 @@ func (s *GStackClusterParser) Initialize() {
 	r_ua.CompileWith(&s.compiler)
 	r_sara_am.CompileWith(&s.compiler)
 	r_mai_han_akat.CompileWith(&s.compiler)
+	r_sandwich_ao.CompileWith(&s.compiler)
 	r_single_diacritic_vowel.CompileWith(&s.compiler)
 	r_single_consonant.CompileWith(&s.compiler)
 	r_punctuation.CompileWith(&s.compiler)
@@ -426,6 +359,7 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_sandwich_ia,      // must come before maybe_sandwich_sara_a
 		r_sandwich_ueea_er, // must come before maybe_sandwich_sara_a
 		r_medial_er,        // must come before maybe_sandwich_sara_a
+		r_sandwich_ao,      // must come before maybe_sandwich_sara_a
 		r_sara_ai,
 		r_maybe_sandwich_sara_a,
 		r_sara_a_aa,
@@ -543,38 +477,6 @@ var r_mai_han_akat = TccRule{
 
 		reg2 := m.Group(2)
 		c.Tail = append(c.Tail, input[reg2.Start])
-
-		*length = m.Length()
-		return true
-	},
-}
-
-// Single diacritic vowel
-var r_single_diacritic_vowel = TccRule{
-	name: "single_diacritic_vowel",
-	rs: "([:consonant: && " +
-		"(:sara i: || :sara ii: || :sara ue: || :sara u: || :sara uu:) ])",
-	/*
-		rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:])? " +
-			"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])? " +
-			"([:sara_a:])",
-	*/
-	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
-		m := s.regex.MatchAt(input, i)
-		if !m.Success {
-			return false
-		}
-		*c = makeCluster(input[i : i+m.Length()])
-		/*
-			reg1 := m.Group(1)
-			if !reg1.Empty() {
-				assertGroupLength(reg1, 1)
-				c.FrontVowel = input[reg1.Start]
-			}
-		*/
-
-		reg1 := m.Group(1)
-		c.FirstConsonant = input[reg1.Start]
 
 		*length = m.Length()
 		return true
@@ -842,6 +744,74 @@ var r_medial_er = TccRule{
 		if regc.Length() > 1 {
 			c.Tail = append(c.Tail, input[regc.Start+1:regc.End]...)
 		}
+
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_sandwich_ao = TccRule{
+	name: "sandwich_ao",
+	rs: "([:sara e:])" +
+		"(?P<consonant>" +
+		// BEGIN possible consonants allowed between sandwich vowels
+		"([:consonant: && !:diacritic vowel:]) | " +
+		"([:bare ho hip:] [:low consonant after ho hip: && !:diacritic vowel:]) | " +
+		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && !:diacritic vowel:]) |" +
+		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && !:diacritic vowel:]) |" +
+		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && !:diacritic vowel:]) " +
+		// END   possible consonants allowed between sandwich vowels
+		")" +
+		"(?P<tail>[:sara aa:])",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Group(1)
+		c.FrontVowel = input[reg1.Start]
+
+		regc := m.GroupName("consonant")
+		c.FirstConsonant = input[regc.Start]
+		if regc.Length() > 1 {
+			c.Tail = append(c.Tail, input[regc.Start+1:regc.End]...)
+		}
+
+		regt := m.GroupName("tail")
+		c.Tail = append(c.Tail, input[regt.Start:regt.End]...)
+
+		*length = m.Length()
+		return true
+	},
+}
+
+// Single diacritic vowel
+var r_single_diacritic_vowel = TccRule{
+	name: "single_diacritic_vowel",
+	rs: "([:consonant: && " +
+		"(:sara i: || :sara ii: || :sara ue: || :sara u: || :sara uu:) ])",
+	/*
+		rs: "([:sara_e:] | [:sara_ae:] | [:sara_o:])? " +
+			"([:consonant: && !:diacritic-vowel:]) ([:sliding-consonant:])? " +
+			"([:sara_a:])",
+	*/
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		/*
+			reg1 := m.Group(1)
+			if !reg1.Empty() {
+				assertGroupLength(reg1, 1)
+				c.FrontVowel = input[reg1.Start]
+			}
+		*/
+
+		reg1 := m.Group(1)
+		c.FirstConsonant = input[reg1.Start]
 
 		*length = m.Length()
 		return true
