@@ -633,6 +633,18 @@ func (s *MySuite) TestClusterSaraAi(c *C) {
 	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_RO_RUA)
 }
 
+func (s *MySuite) TestClusterSaraOGlide(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+
+	input := "โคคาโคลา"
+	//	THAI_CHARACTER_SARA_O, THAI_CHARACTER_KHO_KHWAI, THAI_CHARACTER_KHO_KHWAI, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_SARA_O, THAI_CHARACTER_KHO_KHWAI, THAI_CHARACTER_LO_LING, THAI_CHARACTER_SARA_AA
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+	c.Assert(len(gcs), Equals, 4)
+}
+
 func (s *MySuite) TestClusterSandwichAo(c *C) {
 	var gcp GStackClusterParser
 	gcp.Initialize()

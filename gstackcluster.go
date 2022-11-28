@@ -273,6 +273,11 @@ func (s *GStackClusterParser) Initialize() {
 			return RuneIsMidPositionSign(gs.Main)
 		})
 
+	s.compiler.MakeClass("digit",
+		func(gs GraphemeStack) bool {
+			return RuneIsDigit(gs.Main)
+		})
+
 	// regex identity classes for:
 	// digits, non-diacritic vowels, currency, and other mid-position signs
 	// for consonant, prefix with "bare "
@@ -335,7 +340,7 @@ func (s *GStackClusterParser) Initialize() {
 	r_sandwich_ao.CompileWith(&s.compiler)
 	r_single_diacritic_vowel.CompileWith(&s.compiler)
 	r_single_consonant.CompileWith(&s.compiler)
-	r_punctuation.CompileWith(&s.compiler)
+	r_punctuation_or_digit.CompileWith(&s.compiler)
 }
 
 func assertGroupLength(reg objregexp.Range, length int) {
@@ -372,7 +377,7 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_mai_han_akat,
 		r_single_diacritic_vowel, // this comes after other vowels
 		r_single_consonant,       // this needs to be the last consonant rule
-		r_punctuation,
+		r_punctuation_or_digit,
 	}
 
 next_input:
@@ -549,17 +554,35 @@ var r_maybe_sandwich_sara_a = TccRule{
 		"([:consonant: && !:diacritic vowel:]) | " +
 		"([:bare ho hip:] [:low consonant after ho hip: && !:diacritic vowel:]) | " +
 		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && !:diacritic vowel:]) |" +
-		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && !:diacritic vowel:]) |" +
-		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && !:diacritic vowel:]) " +
+		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && !:diacritic vowel:])   |" +
+		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && !:diacritic vowel:])" +
 		// END   possible consonants allowed between sandwich vowels
 		")" +
-		"(?P<sara a>[:sara a:]?)",
+		// This is complicated. If the list ends with a sara_a, the 2nd
+		// item matches.
+		//"(?P<sara a>[:sara a:]?)(?P<xtra>$|[(!:mid position vowel:)||:sara a:])",
+		"(?P<final>$|[(!:mid position vowel:)||:sara a:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
 			return false
 		}
-		*c = makeCluster(input[i : i+m.Length()])
+
+		totalLength := m.Length()
+
+		finalReg := m.GroupName("final")
+		xtra := finalReg.Length()
+		hasSaraA := false
+		if xtra > 0 {
+			if input[finalReg.Start].Main != THAI_CHARACTER_SARA_A {
+				totalLength--
+			} else {
+				hasSaraA = true
+			}
+		}
+
+		*c = makeCluster(input[i : i+totalLength])
+
 		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
@@ -569,12 +592,11 @@ var r_maybe_sandwich_sara_a = TccRule{
 			c.Tail = append(c.Tail, input[regc.Start+1:regc.End]...)
 		}
 
-		if m.HasGroupName("sara a") {
-			rega := m.GroupName("sara a")
-			c.Tail = append(c.Tail, input[rega.Start])
+		if hasSaraA {
+			c.Tail = append(c.Tail, input[finalReg.Start])
 		}
 
-		*length = m.Length()
+		*length = totalLength
 		return true
 	},
 }
@@ -729,9 +751,9 @@ var r_sara_ai = TccRule{
 		// BEGIN possible consonants allowed between sandwich vowels
 		"([:consonant: && (:sara uee: || !:diacritic vowel:)]) | " +
 		"([:bare ho hip:] [:low consonant after ho hip: && (:sara uee: || !:diacritic vowel:)]) | " +
-		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && (:sara uee: || !:diacritic vowel:)]) |" +
-		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && (:sara uee: || !:diacritic vowel:)]) |" +
-		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && (:sara uee: || !:diacritic vowel:)]) " +
+		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && (:sara uee: || !:diacritic vowel:)]) (?P<xtra1>$|[!:mid position vowel:]) |" +
+		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && (:sara uee: || !:diacritic vowel:)])   (?P<xtra2>$|[!:mid position vowel:]) |" +
+		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && (:sara uee: || !:diacritic vowel:)]) (?P<xtra3>$|[!:mid position vowel:])  " +
 		// END   possible consonants allowed between sandwich vowels
 		")",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
@@ -739,17 +761,30 @@ var r_sara_ai = TccRule{
 		if !m.Success {
 			return false
 		}
-		*c = makeCluster(input[i : i+m.Length()])
+		var xtra int
+		for _, name := range []string{"xtra1", "xtra2", "xtra3"} {
+			xtraReg := m.GroupName(name)
+			xtra = xtraReg.Length()
+			if xtra > 0 {
+				break
+			}
+		}
+
+		totalLength := m.Length()
+		totalLength -= xtra
+
+		*c = makeCluster(input[i : i+totalLength])
 		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
 		regc := m.GroupName("consonant")
 		c.FirstConsonant = input[regc.Start]
 		if regc.Length() > 1 {
-			c.Tail = append(c.Tail, input[regc.Start+1:regc.End]...)
+			tailEnd := regc.End - xtra
+			c.Tail = append(c.Tail, input[regc.Start+1:tailEnd]...)
 		}
 
-		*length = m.Length()
+		*length = totalLength
 		return true
 	},
 }
@@ -873,9 +908,9 @@ var r_single_consonant = TccRule{
 	},
 }
 
-var r_punctuation = TccRule{
-	name: "punctuation",
-	rs:   "[:mid position sign:]",
+var r_punctuation_or_digit = TccRule{
+	name: "punctuation_or_digit",
+	rs:   "[:mid position sign:] | [:digit:]",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
