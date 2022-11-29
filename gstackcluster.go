@@ -23,6 +23,9 @@ const (
 	ReasonSaraEInvalidCombo  = 1
 	ReasonSaraAeInvalidCombo = 2
 	ReasonSoloDiacritic      = 3
+	ReasonSoloFinalVowel     = 4
+	ReasonFinalFrontVowel    = 5
+	ReasonSoloFrontVowel     = 6
 )
 
 type GStackCluster struct {
@@ -357,6 +360,8 @@ func (s *GStackClusterParser) Initialize() {
 	r_error_sara_e_ae.CompileWith(&s.compiler)
 	r_error_short_o_ang.CompileWith(&s.compiler)
 	r_error_solo_final_vowel.CompileWith(&s.compiler)
+	r_error_final_front_vowel.CompileWith(&s.compiler)
+	r_error_double_front_vowel.CompileWith(&s.compiler)
 }
 
 func assertGroupLength(reg objregexp.Range, length int) {
@@ -397,6 +402,8 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_punctuation_or_digit,
 		r_error_solo_diacritic,
 		r_error_solo_final_vowel,
+		r_error_final_front_vowel,
+		r_error_double_front_vowel,
 		r_error_sara_e_ae,   // this must come after maybe_sandwich_sara_a
 		r_error_short_o_ang, // this must come after maybe_sandwich_sara_a
 	}
@@ -1023,8 +1030,42 @@ var r_error_solo_final_vowel = TccRule{
 		*c = makeCluster(input[i : i+m.Length()])
 		c.SingleMidSign = input[i]
 		c.IsValidThai = false
-		c.InvalidReason = ReasonSoloDiacritic
+		c.InvalidReason = ReasonSoloFinalVowel
 		*length = m.Length()
+		return true
+	},
+}
+
+var r_error_final_front_vowel = TccRule{
+	name: "final_front_vowel",
+	rs:   "[:front position vowel:] $",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		c.SingleMidSign = input[i]
+		c.IsValidThai = false
+		c.InvalidReason = ReasonFinalFrontVowel
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_error_double_front_vowel = TccRule{
+	name: "double_front_vowel",
+	rs:   "[:front position vowel:] [:front position vowel:]",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+1])
+		c.SingleMidSign = input[i]
+		c.IsValidThai = false
+		c.InvalidReason = ReasonSoloFrontVowel
+		*length = 1 // not 2... we want the next iteration to parse that 2nd front vowel
 		return true
 	},
 }
