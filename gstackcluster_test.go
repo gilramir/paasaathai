@@ -707,6 +707,32 @@ func (s *MySuite) TestClusterOAngConsonant(c *C) {
 	c.Check(gcs[7].FirstConsonant.Main, Equals, THAI_CHARACTER_YO_YAK)
 }
 
+func (s *MySuite) TestClusterSaraEOAngVowel(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "พีเคอาร์อาร์พี"
+	//	article/article_00072.txt line 113 -> THAI_CHARACTER_PHO_PHAN, THAI_CHARACTER_SARA_II, THAI_CHARACTER_SARA_E, THAI_CHARACTER_KHO_KHWAI, THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_RO_RUA, THAI_CHARACTER_THANTHAKHAT, THAI_CHARACTER_O_ANG, THAI_CHARACTER_SARA_AA, THAI_CHARACTER_RO_RUA, THAI_CHARACTER_THANTHAKHAT, THAI_CHARACTER_PHO_PHAN, THAI_CHARACTER_SARA_II
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+	c.Assert(len(gcs), Equals, 7)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_PHO_PHAN)
+	c.Check(gcs[0].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_II)
+	c.Check(gcs[1].FrontVowel.Main, Equals, THAI_CHARACTER_SARA_E)
+	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_KHO_KHWAI)
+	c.Check(gcs[2].FirstConsonant.Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gcs[2].Tail[0].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gcs[3].FirstConsonant.Main, Equals, THAI_CHARACTER_RO_RUA)
+	c.Check(gcs[3].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_THANTHAKHAT)
+	c.Check(gcs[4].FirstConsonant.Main, Equals, THAI_CHARACTER_O_ANG)
+	c.Check(gcs[4].Tail[0].Main, Equals, THAI_CHARACTER_SARA_AA)
+	c.Check(gcs[5].FirstConsonant.Main, Equals, THAI_CHARACTER_RO_RUA)
+	c.Check(gcs[5].FirstConsonant.UpperDiacritic, Equals, THAI_CHARACTER_THANTHAKHAT)
+	c.Check(gcs[6].FirstConsonant.Main, Equals, THAI_CHARACTER_PHO_PHAN)
+	c.Check(gcs[6].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_II)
+}
+
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
 // sara o

@@ -131,11 +131,21 @@ func (s *GraphemeStackParser) parse(input string) {
 		// How many UTF-8 bytes have we decoded?
 		decodedBytes := r1sz
 
-		gs := GraphemeStack{
-			Main: r1,
+		gs := GraphemeStack{}
+
+		invalidThai := false
+		if RuneIsUpperPositionVowel(r1) || RuneIsLowerPositionVowel(r1) {
+			gs.DiacriticVowel = r1
+			invalidThai = true
+		} else if RuneIsToneMark(r1) || RuneIsUpperPositionSign(r1) {
+			gs.UpperDiacritic = r1
+			invalidThai = true
+		} else {
+			gs.Main = r1
 		}
+
 		// Not Thai? Next!
-		if !RuneIsThai(r1) {
+		if !RuneIsThai(r1) || invalidThai {
 			gs.Text = input[i : i+decodedBytes]
 			s.Chan <- gs
 			i += decodedBytes

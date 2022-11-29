@@ -19,6 +19,12 @@ import (
 	"github.com/gilramir/objregexp"
 )
 
+const (
+	ReasonSaraEInvalidCombo  = 1
+	ReasonSaraAeInvalidCombo = 2
+	ReasonSoloDiacritic      = 3
+)
+
 type GStackCluster struct {
 	// The UTF-8 string in this cluster
 	Text string
@@ -30,7 +36,7 @@ type GStackCluster struct {
 	IsValidThai bool
 
 	// If invalid, this is the reason
-	InvalidReason string
+	InvalidReason int
 
 	// These are the well-known parts of a cluster
 	// Not always set, but if so, this is the vowel that
@@ -73,7 +79,7 @@ func (s *GStackCluster) Repr() string {
 				return result + ">"
 			}
 		} else {
-			return fmt.Sprintf("<CC Invalid-Thai: %s Reason: %s>", s.Text, s.InvalidReason)
+			return fmt.Sprintf("<CC Invalid-Thai: %s Reason: %d>", s.Text, s.InvalidReason)
 		}
 	} else {
 		return fmt.Sprintf("<CC Not-Thai: %s>", s.Text)
@@ -273,6 +279,11 @@ func (s *GStackClusterParser) Initialize() {
 			return RuneIsMidPositionSign(gs.Main)
 		})
 
+	s.compiler.MakeClass("upper position sign",
+		func(gs GraphemeStack) bool {
+			return RuneIsUpperPositionSign(gs.UpperDiacritic)
+		})
+
 	s.compiler.MakeClass("digit",
 		func(gs GraphemeStack) bool {
 			return RuneIsDigit(gs.Main)
@@ -341,6 +352,9 @@ func (s *GStackClusterParser) Initialize() {
 	r_single_diacritic_vowel.CompileWith(&s.compiler)
 	r_single_consonant.CompileWith(&s.compiler)
 	r_punctuation_or_digit.CompileWith(&s.compiler)
+	r_error_solo_diacritic.CompileWith(&s.compiler)
+	r_error_sara_e_ae.CompileWith(&s.compiler)
+	r_error_short_o_ang.CompileWith(&s.compiler)
 }
 
 func assertGroupLength(reg objregexp.Range, length int) {
@@ -378,6 +392,9 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_single_diacritic_vowel, // this comes after other vowels
 		r_single_consonant,       // this needs to be the last consonant rule
 		r_punctuation_or_digit,
+		r_error_solo_diacritic,
+		r_error_sara_e_ae,   // this must come after maybe_sandwich_sara_a
+		r_error_short_o_ang, // this must come after maybe_sandwich_sara_a
 	}
 
 next_input:
@@ -558,9 +575,6 @@ var r_maybe_sandwich_sara_a = TccRule{
 		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && !:diacritic vowel:])" +
 		// END   possible consonants allowed between sandwich vowels
 		")" +
-		// This is complicated. If the list ends with a sara_a, the 2nd
-		// item matches.
-		//"(?P<sara a>[:sara a:]?)(?P<xtra>$|[(!:mid position vowel:)||:sara a:])",
 		"(?P<final>$|[(!:mid position vowel:)||:sara a:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
@@ -720,13 +734,29 @@ var r_sandwich_ueea_er = TccRule{
 		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && (:sara uee: || !:diacritic vowel:)]) " +
 		// END   possible consonants allowed between sandwich vowels
 		")" +
-		"(?P<tail>[:o ang:] [:sara a:]?)",
+		//		"(?P<tail>[:o ang:] [:sara a:]?)",
+		"(?P<o ang>[:o ang:]) (?P<final>$|[(!:mid position vowel:)||:sara a:])",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
 			return false
 		}
-		*c = makeCluster(input[i : i+m.Length()])
+		totalLength := m.Length()
+
+		finalReg := m.GroupName("final")
+		xtra := finalReg.Length()
+		hasSaraA := false
+		if xtra > 0 {
+			if input[finalReg.Start].Main != THAI_CHARACTER_SARA_A {
+				totalLength--
+			} else {
+				hasSaraA = true
+
+			}
+		}
+
+		*c = makeCluster(input[i : i+totalLength])
+
 		reg1 := m.Group(1)
 		c.FrontVowel = input[reg1.Start]
 
@@ -736,10 +766,14 @@ var r_sandwich_ueea_er = TccRule{
 			c.Tail = append(c.Tail, input[regc.Start+1:regc.End]...)
 		}
 
-		regt := m.GroupName("tail")
-		c.Tail = append(c.Tail, input[regt.Start:regt.End]...)
+		rego := m.GroupName("o ang")
+		c.Tail = append(c.Tail, input[rego.Start])
 
-		*length = m.Length()
+		if hasSaraA {
+			c.Tail = append(c.Tail, input[finalReg.Start])
+		}
+
+		*length = totalLength
 		return true
 	},
 }
@@ -918,6 +952,83 @@ var r_punctuation_or_digit = TccRule{
 		}
 		*c = makeCluster(input[i : i+m.Length()])
 		c.SingleMidSign = input[i]
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_error_solo_diacritic = TccRule{
+	name: "solo_diacritic",
+	rs:   "[:diacritic vowel:] | [:tone mark:] | [:upper position sign:]",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		c.SingleMidSign = input[i]
+		c.IsValidThai = false
+		c.InvalidReason = ReasonSoloDiacritic
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_error_sara_e_ae = TccRule{
+	name: "error_sara_e_ae",
+	rs:   "([:sara e:]|[:sara ae:]) [:consonant: && :diacritic vowel:]",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		c.FrontVowel = input[i]
+		c.FirstConsonant = input[i+1]
+		c.IsValidThai = false
+		c.InvalidReason = ReasonSaraEInvalidCombo
+		*length = m.Length()
+		return true
+	},
+}
+
+// some people mispell it with a sara ae at the beginning
+var r_error_short_o_ang = TccRule{
+	name: "error_short_o_ang",
+	rs: "([:sara ae:])" +
+		"(?P<consonant>" +
+		// BEGIN possible consonants allowed between sandwich vowels
+		"([:consonant: && !:diacritic vowel:]) | " +
+		"([:bare ho hip:] [:low consonant after ho hip: && !:diacritic vowel:]) | " +
+		"([:consonant before gliding lo ling: && !:diacritic vowel:] [:lo ling: && !:diacritic vowel:]) |" +
+		"([:consonant before gliding ro rua: && !:diacritic vowel:] [:ro rua: && !:diacritic vowel:]) |" +
+		"([:consonant before gliding wo waen: && !:diacritic vowel:] [:wo waen: && !:diacritic vowel:]) " +
+		// special words:
+		"([:bare cho ching:][:bare pho phan:])" + // "เฉพาะ"
+		// END   possible consonants allowed between sandwich vowels
+		")" +
+		"(?P<tail>[:sara aa:][:sara a:])",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		reg1 := m.Group(1)
+		c.FrontVowel = input[reg1.Start]
+
+		regc := m.GroupName("consonant")
+		c.FirstConsonant = input[regc.Start]
+		if regc.Length() > 1 {
+			c.Tail = append(c.Tail, input[regc.Start+1:regc.End]...)
+		}
+
+		regt := m.GroupName("tail")
+		c.Tail = append(c.Tail, input[regt.Start:regt.End]...)
+
+		c.IsValidThai = false
+		c.InvalidReason = ReasonSaraAeInvalidCombo
+
 		*length = m.Length()
 		return true
 	},

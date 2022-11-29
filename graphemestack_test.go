@@ -56,7 +56,7 @@ func (s *MySuite) TestGraphemeStack03(c *C) {
 	c.Assert(len(gstacks), Equals, 4)
 
 	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_SARA_AE)
-	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_SARA_II)
+	c.Check(gstacks[1].DiacriticVowel, Equals, THAI_CHARACTER_SARA_II)
 	c.Check(gstacks[2].Main, Equals, THAI_CHARACTER_YO_YAK)
 	c.Check(gstacks[3].Main, Equals, THAI_CHARACTER_WO_WAEN)
 
