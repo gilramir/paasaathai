@@ -733,6 +733,20 @@ func (s *MySuite) TestClusterSaraEOAngVowel(c *C) {
 	c.Check(gcs[6].FirstConsonant.DiacriticVowel, Equals, THAI_CHARACTER_SARA_II)
 }
 
+func (s *MySuite) TestClusterSanskritRa(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+	input := "ฤๅ"
+	//        article/article_00177.txt line 2 -> THAI_CHARACTER_RU, THAI_CHARACTER_LAKKHANGYAO
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+	c.Assert(len(gcs), Equals, 1)
+
+	c.Check(gcs[0].FirstConsonant.Main, Equals, THAI_CHARACTER_RU)
+	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_LAKKHANGYAO)
+}
+
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
 // sara o

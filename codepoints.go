@@ -103,14 +103,13 @@ func RuneIsUpperPositionVowel(r rune) bool {
 }
 
 // We consider THAI_CHARACTER_SARA_AM to be a mid position vowel
-// We consider THAI CHARACTER LAKKHANGYAO to be a vowel too, and thus, mid
-// position
-// "Mid" position is both vertically "mid", and after an initial consonant
+// "Mid" position means both vertically.
+// We consider THAI CHARACTER LAKKHANGYAO not to be a vowel, because
+// it is so special.
 func RuneIsMidPositionVowel(r rune) bool {
 	return r == THAI_CHARACTER_SARA_A ||
 		r == THAI_CHARACTER_SARA_AA ||
-		r == THAI_CHARACTER_SARA_AM ||
-		r == THAI_CHARACTER_LAKKHANGYAO
+		r == THAI_CHARACTER_SARA_AM
 }
 
 // We consider THAI_CHARACTER_PHINTHU to be a lower position vowel

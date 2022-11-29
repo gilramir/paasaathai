@@ -352,9 +352,11 @@ func (s *GStackClusterParser) Initialize() {
 	r_single_diacritic_vowel.CompileWith(&s.compiler)
 	r_single_consonant.CompileWith(&s.compiler)
 	r_punctuation_or_digit.CompileWith(&s.compiler)
+	r_sanskrit.CompileWith(&s.compiler)
 	r_error_solo_diacritic.CompileWith(&s.compiler)
 	r_error_sara_e_ae.CompileWith(&s.compiler)
 	r_error_short_o_ang.CompileWith(&s.compiler)
+	r_error_solo_final_vowel.CompileWith(&s.compiler)
 }
 
 func assertGroupLength(reg objregexp.Range, length int) {
@@ -390,9 +392,11 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_sara_am,
 		r_mai_han_akat,
 		r_single_diacritic_vowel, // this comes after other vowels
+		r_sanskrit,               // this must come before single_consonant
 		r_single_consonant,       // this needs to be the last consonant rule
 		r_punctuation_or_digit,
 		r_error_solo_diacritic,
+		r_error_solo_final_vowel,
 		r_error_sara_e_ae,   // this must come after maybe_sandwich_sara_a
 		r_error_short_o_ang, // this must come after maybe_sandwich_sara_a
 	}
@@ -942,6 +946,22 @@ var r_single_consonant = TccRule{
 	},
 }
 
+var r_sanskrit = TccRule{
+	name: "sanskrit",
+	rs:   "[:ru:] [:lakkhangyao:]",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		c.FirstConsonant = input[i]
+		c.Tail = append(c.Tail, input[i+1])
+		*length = m.Length()
+		return true
+	},
+}
+
 var r_punctuation_or_digit = TccRule{
 	name: "punctuation_or_digit",
 	rs:   "[:mid position sign:] | [:digit:]",
@@ -987,6 +1007,23 @@ var r_error_sara_e_ae = TccRule{
 		c.FirstConsonant = input[i+1]
 		c.IsValidThai = false
 		c.InvalidReason = ReasonSaraEInvalidCombo
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_error_solo_final_vowel = TccRule{
+	name: "solo_final_vowel",
+	rs:   "[:sara aa:] | [:sara a:] | [:sara am:]",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+		c.SingleMidSign = input[i]
+		c.IsValidThai = false
+		c.InvalidReason = ReasonSoloDiacritic
 		*length = m.Length()
 		return true
 	},
