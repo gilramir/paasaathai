@@ -364,6 +364,28 @@ func (s *GStackClusterParser) Initialize() {
 	r_error_double_front_vowel.CompileWith(&s.compiler)
 }
 
+func RuneThaiNameToRegexClassName(fullName string) (string, error) {
+	var name string
+	if fullName[0:11] == "THAI_DIGIT_" {
+		name = fullName[11:]
+	} else if fullName[0:15] == "THAI_CHARACTER_" {
+		name = fullName[15:]
+		/*
+			if RuneIsConsonant(thaiRune) || RuneIsDiacritic(thaiRune) {
+				name = "bare " + name
+			}
+		*/
+	} else if fullName[0:21] == "THAI_CURRENCY_SYMBOL_" {
+		name = fullName[21:]
+	} else {
+		return "", fmt.Errorf("Didn't expect code point name %s", fullName)
+	}
+
+	name = strings.ToLower(name)
+	name = strings.ReplaceAll(name, "_", " ")
+	return name, nil
+}
+
 func assertGroupLength(reg objregexp.Range, length int) {
 	if reg.Length() != length {
 		panic(fmt.Sprintf("Group expected to have length %d. Got: %+v",

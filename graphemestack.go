@@ -63,6 +63,31 @@ func (s GraphemeStack) IsValidThai() bool {
 	return s.Main != 0 && RuneIsThai(s.Main)
 }
 
+func (s GraphemeStack) ToRegexString() (string, error) {
+	if !s.IsThai() {
+		return string(s.Main), nil
+		// return "", errors.New("Cannot make a regex string from a non-Thai string")
+	}
+	if !s.IsValidThai() {
+		return "", errors.New("Cannot make a regex string from an invalid Thai string")
+	}
+
+	rString := "["
+
+	runeName, has := RuneToThaiName[s.Main]
+	if !has {
+		return "", fmt.Errorf("Did not find the name of '%s'", string(s.Main))
+	}
+	cName, err := RuneThaiNameToRegexClassName(runeName)
+	if err != nil {
+		return "", fmt.Errorf("Converting '%s': %w", runeName, err)
+	}
+	rString += ":" + cName + ":"
+	rString += "]"
+
+	return rString, nil
+}
+
 /*
 func (s GraphemeStack) StartsWithConsonant() bool {
 	return RuneIsConsonant(s.Runes[0])

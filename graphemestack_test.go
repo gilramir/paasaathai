@@ -160,3 +160,45 @@ func (s *MySuite) TestGraphemeStack09(c *C) {
 	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_SARA_AE)
 	c.Check(gstacks[1].Main, Equals, THAI_CHARACTER_TO_TAO)
 }
+
+func (s *MySuite) TestToRegexString01(c *C) {
+	input := "การ"
+	c.Assert(len([]rune(input)), Equals, 3)
+
+	gstacks := ParseGraphemeStacks(input)
+	fmt.Printf("got: %+v\n", gstacks)
+	c.Assert(len(gstacks), Equals, 3)
+
+	rs, err := gstacks[0].ToRegexString()
+	c.Assert(err, IsNil)
+	c.Check(rs, Equals, "[:ko kai:]")
+
+	rs, err = gstacks[1].ToRegexString()
+	c.Assert(err, IsNil)
+	c.Check(rs, Equals, "[:sara aa:]")
+
+	rs, err = gstacks[2].ToRegexString()
+	c.Assert(err, IsNil)
+	c.Check(rs, Equals, "[:ro rua:]")
+}
+
+func (s *MySuite) TestToRegexString02(c *C) {
+	input := "บ้าน"
+	c.Assert(len([]rune(input)), Equals, 4)
+
+	gstacks := ParseGraphemeStacks(input)
+	fmt.Printf("got: %+v\n", gstacks)
+	c.Assert(len(gstacks), Equals, 3)
+
+	rs, err := gstacks[0].ToRegexString()
+	c.Assert(err, IsNil)
+	c.Check(rs, Equals, "[:bo baimai:]")
+
+	rs, err = gstacks[1].ToRegexString()
+	c.Assert(err, IsNil)
+	c.Check(rs, Equals, "[:sara aa:]")
+
+	rs, err = gstacks[2].ToRegexString()
+	c.Assert(err, IsNil)
+	c.Check(rs, Equals, "[:no nu:]")
+}
