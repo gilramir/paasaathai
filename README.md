@@ -63,3 +63,5 @@ Then, created the GraphemeCluster objects from those:
 ```
 	tccs := gcp.ParseGraphemeStacks(gstacks)
 ```
+
+For every GraphemeCluster, be sure to check IsValidThai before using it.

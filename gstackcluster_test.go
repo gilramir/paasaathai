@@ -793,6 +793,26 @@ func (s *MySuite) TestClusterWiki03(c *C) {
 
 	// It doesn't crash
 	c.Assert(len(gcs), Equals, 11)
+	//	fmt.Printf("0: %s %s\n", gcs[0].Text, gcs[0].Repr())
+	//	fmt.Printf("1: %s %s\n", gcs[1].Text, gcs[1].Repr())
+	c.Check(gcs[0].IsValidThai, Equals, false)
+	c.Check(gcs[1].IsValidThai, Equals, false)
+}
+
+// Line 49529
+// Phinthu
+func (s *MySuite) TestClusterWiki04(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+
+	input := "โหฺรบ"
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	// It doesn't crash
+	c.Assert(len(gcs), Equals, 3)
+	c.Check(gcs[0].IsValidThai, Equals, false)
 }
 
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5

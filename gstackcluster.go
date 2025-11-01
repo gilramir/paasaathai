@@ -26,6 +26,7 @@ const (
 	ReasonSoloFinalVowel     = 4
 	ReasonFinalFrontVowel    = 5
 	ReasonSoloFrontVowel     = 6
+	ReasonNonModernThai      = 7
 )
 
 type GStackCluster struct {
@@ -101,6 +102,7 @@ func makeCluster(input []GraphemeStack) GStackCluster {
 			}
 		} else {
 			isThai = false
+			isValidThai = false
 		}
 	}
 	tcc := GStackCluster{
@@ -242,6 +244,11 @@ func (s *GStackClusterParser) Initialize() {
 			return gs.DiacriticVowel != 0
 		})
 
+	s.compiler.MakeClass("has phinthu",
+		func(gs GraphemeStack) bool {
+			return gs.DiacriticVowel == THAI_CHARACTER_PHINTHU
+		})
+
 	s.compiler.MakeClass("tone mark",
 		func(gs GraphemeStack) bool {
 			return RuneIsToneMark(gs.UpperDiacritic)
@@ -363,6 +370,7 @@ func (s *GStackClusterParser) Initialize() {
 	r_error_solo_final_vowel.CompileWith(&s.compiler)
 	r_error_final_front_vowel.CompileWith(&s.compiler)
 	r_error_double_front_vowel.CompileWith(&s.compiler)
+	r_error_phinthu.CompileWith(&s.compiler)
 }
 
 func RuneThaiNameToRegexClassName(fullName string) (string, error) {
@@ -424,6 +432,7 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_sanskrit,               // this must come before single_consonant
 		r_single_consonant,       // this needs to be the last consonant rule
 		r_punctuation_or_digit,
+		r_error_phinthu,
 		r_error_solo_diacritic,
 		r_error_solo_final_vowel,
 		r_error_final_front_vowel,
@@ -1173,6 +1182,32 @@ var r_error_short_o_ang = TccRule{
 		c.IsValidThai = false
 		c.InvalidReason = ReasonSaraAeInvalidCombo
 
+		*length = m.Length()
+		return true
+	},
+}
+
+var r_error_phinthu = TccRule{
+	name: "error_phinthu",
+	rs: "(?P<vowel>[:front position vowel:])? " +
+		"(?P<consonant>[:consonant: && :has phinthu:])",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+		*c = makeCluster(input[i : i+m.Length()])
+
+		reg_v := m.GroupName("vowel")
+		if reg_v.Length() > 0 {
+			c.FirstConsonant = input[reg_v.Start]
+		}
+
+		reg_c := m.GroupName("consonant")
+		c.SingleMidSign = input[reg_c.Start]
+
+		c.IsValidThai = false
+		c.InvalidReason = ReasonNonModernThai
 		*length = m.Length()
 		return true
 	},

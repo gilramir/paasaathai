@@ -84,7 +84,8 @@ func RuneIsVowel(r rune) bool {
 }
 
 func RuneIsDiacritic(r rune) bool {
-	return RuneIsUpperPosition(r) || RuneIsLowerPositionVowel(r)
+	return RuneIsUpperPosition(r) || RuneIsLowerPositionVowel(r) ||
+		r == THAI_CHARACTER_PHINTHU
 }
 
 func RuneIsUpperPosition(r rune) bool {
