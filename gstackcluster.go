@@ -347,6 +347,7 @@ func (s *GStackClusterParser) Initialize() {
 	r_sara_a_aa.CompileWith(&s.compiler)
 	r_sara_uee.CompileWith(&s.compiler)
 	r_sara_ai.CompileWith(&s.compiler)
+	r_sara_ai_single_consonant.CompileWith(&s.compiler)
 	r_medial_er.CompileWith(&s.compiler)
 	r_ua.CompileWith(&s.compiler)
 	r_sara_am.CompileWith(&s.compiler)
@@ -411,7 +412,8 @@ func (s *GStackClusterParser) ParseGraphemeStacks(input []GraphemeStack) []GStac
 		r_sandwich_ueea_er, // must come before maybe_sandwich_sara_a
 		r_medial_er,        // must come before maybe_sandwich_sara_a
 		r_sandwich_ao,      // must come before maybe_sandwich_sara_a
-		r_sara_ai,
+		r_sara_ai,          // must come before sara_ai_single_consonant
+		r_sara_ai_single_consonant,
 		r_maybe_sandwich_sara_a,
 		r_sara_a_aa,
 		r_sara_uee,
@@ -450,8 +452,8 @@ next_input:
 			matched := rule.ck(&rule, input, i, &length, &c)
 			if matched {
 				c.MatchingRule = rule.name
-				fmt.Printf("matched: %s @i=%d length=%d %s\n",
-					rule.name, i, length, c.Repr())
+				/*				fmt.Printf("matched: %s @i=%d length=%d %s\n",
+								rule.name, i, length, c.Repr())*/
 				clusters = append(clusters, c)
 				i += length
 				continue next_input
@@ -459,7 +461,16 @@ next_input:
 		}
 
 		// No success.
-		msg := fmt.Sprintf("Can't handle gstack at pos %d: %s", i, input[i].Repr())
+		report := "GraphemeStacks:\n"
+		for zi := 0; zi < len(input); zi++ {
+			report += fmt.Sprintf("%d: %s = %s\n", zi, input[zi].Text, input[zi].Repr())
+		}
+		report += "\nClusters:\n"
+		for zi, zc := range clusters {
+			report += fmt.Sprintf("%d: %s = %s\n", zi, zc.Text, zc.Repr())
+		}
+
+		msg := fmt.Sprintf("Can't handle gstack at pos %d:\n%s", i, report)
 		panic(msg)
 	}
 
@@ -848,6 +859,38 @@ var r_sara_ai = TccRule{
 		c.FirstConsonant = input[regc.Start]
 		if regc.Length() > 1 {
 			tailEnd := regc.End - xtra
+			c.Tail = append(c.Tail, input[regc.Start+1:tailEnd]...)
+		}
+
+		*length = totalLength
+		return true
+	},
+}
+
+var r_sara_ai_single_consonant = TccRule{
+	name: "sara_ai_single_consonant",
+	rs: "([:sara ai maimuan:] | [:sara ai maimalai:]) " +
+		"(?P<consonant>" +
+		// BEGIN possible consonants
+		"([:consonant:])" +
+		// END   possible consonants
+		")",
+	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
+		m := s.regex.MatchAt(input, i)
+		if !m.Success {
+			return false
+		}
+
+		totalLength := m.Length()
+
+		*c = makeCluster(input[i : i+totalLength])
+		reg1 := m.Group(1)
+		c.FrontVowel = input[reg1.Start]
+
+		regc := m.GroupName("consonant")
+		c.FirstConsonant = input[regc.Start]
+		if regc.Length() > 1 {
+			tailEnd := regc.End
 			c.Tail = append(c.Tail, input[regc.Start+1:tailEnd]...)
 		}
 
