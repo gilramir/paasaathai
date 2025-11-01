@@ -51,3 +51,15 @@ they form a cluster.  Note that these clusters are not syllables;
 they are not units of sound. They are simply an artifact of the rules
 of orthography. In this example, the final character stands alone
 as a cluster by itself.
+
+# Usage
+
+Parse the text into GraphemeStack objects:
+```
+	gstacks := ParseGraphemeStacks(input)
+```
+
+Then, created the GraphemeCluster objects from those:
+```
+	tccs := gcp.ParseGraphemeStacks(gstacks)
+```
