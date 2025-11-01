@@ -1120,7 +1120,8 @@ var r_error_final_front_vowel = TccRule{
 
 var r_error_double_front_vowel = TccRule{
 	name: "double_front_vowel",
-	rs:   "[:front position vowel:] [:front position vowel:]",
+	//rs:   "[:front position vowel:] [:front position vowel:]",
+	rs: "[:front position vowel:] [!:consonant:]",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {

@@ -747,7 +747,7 @@ func (s *MySuite) TestClusterSanskritRa(c *C) {
 	c.Check(gcs[0].Tail[0].Main, Equals, THAI_CHARACTER_LAKKHANGYAO)
 }
 
-func (s *MySuite) TestCluster01(c *C) {
+func (s *MySuite) TestClusterWiki01(c *C) {
 	var gcp GStackClusterParser
 	gcp.Initialize()
 
@@ -762,7 +762,7 @@ func (s *MySuite) TestCluster01(c *C) {
 	c.Check(gcs[3].FirstConsonant.Main, Equals, THAI_CHARACTER_DO_DEK)
 }
 
-func (s *MySuite) TestCluster02(c *C) {
+func (s *MySuite) TestClusterWiki02(c *C) {
 	var gcp GStackClusterParser
 	gcp.Initialize()
 
@@ -778,6 +778,21 @@ func (s *MySuite) TestCluster02(c *C) {
 	c.Check(gcs[1].FirstConsonant.Main, Equals, THAI_CHARACTER_NGO_NGU)
 	//	fmt.Printf("Rule: %s\n", gcs[0].MatchingRule)
 
+}
+
+// Line 46070
+// Mai Ek as single quotes!
+func (s *MySuite) TestClusterWiki03(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+
+	input := " ่ม่ีสสาใาส่วา่"
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	// It doesn't crash
+	c.Assert(len(gcs), Equals, 11)
 }
 
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
