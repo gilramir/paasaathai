@@ -815,6 +815,22 @@ func (s *MySuite) TestClusterWiki04(c *C) {
 	c.Check(gcs[0].IsValidThai, Equals, false)
 }
 
+// Line 49529
+// LU LAKKHANGYAO
+func (s *MySuite) TestClusterWiki05(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+
+	input := "ฦๅ"
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	// It doesn't crash
+	c.Assert(len(gcs), Equals, 1)
+	c.Check(gcs[0].IsValidThai, Equals, true)
+}
+
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
 // sara o

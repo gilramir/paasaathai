@@ -1029,7 +1029,7 @@ var r_single_consonant = TccRule{
 
 var r_sanskrit = TccRule{
 	name: "sanskrit",
-	rs:   "[:ru:] [:lakkhangyao:]",
+	rs:   "([:ru:]|[:lu:]) [:lakkhangyao:]",
 	ck: func(s *TccRule, input []GraphemeStack, i int, length *int, c *GStackCluster) bool {
 		m := s.regex.MatchAt(input, i)
 		if !m.Success {
