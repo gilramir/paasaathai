@@ -1,8 +1,6 @@
 package paasaathai
 
 import (
-	"fmt"
-
 	. "gopkg.in/check.v1"
 )
 
@@ -154,7 +152,7 @@ func (s *MySuite) TestGraphemeStack09(c *C) {
 	c.Assert(len([]rune(input)), Equals, 3)
 
 	gstacks := ParseGraphemeStacks(input)
-	fmt.Printf("got: %+v\n", gstacks)
+	//	fmt.Printf("got: %+v\n", gstacks)
 	c.Assert(len(gstacks), Equals, 2)
 
 	c.Check(gstacks[0].Main, Equals, THAI_CHARACTER_SARA_AE)
@@ -166,7 +164,7 @@ func (s *MySuite) TestToRegexString01(c *C) {
 	c.Assert(len([]rune(input)), Equals, 3)
 
 	gstacks := ParseGraphemeStacks(input)
-	fmt.Printf("got: %+v\n", gstacks)
+	//	fmt.Printf("got: %+v\n", gstacks)
 	c.Assert(len(gstacks), Equals, 3)
 
 	rs, err := gstacks[0].ToRegexString()
@@ -187,7 +185,7 @@ func (s *MySuite) TestToRegexString02(c *C) {
 	c.Assert(len([]rune(input)), Equals, 4)
 
 	gstacks := ParseGraphemeStacks(input)
-	fmt.Printf("got: %+v\n", gstacks)
+	//	fmt.Printf("got: %+v\n", gstacks)
 	c.Assert(len(gstacks), Equals, 3)
 
 	rs, err := gstacks[0].ToRegexString()

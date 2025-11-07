@@ -831,7 +831,26 @@ func (s *MySuite) TestClusterWiki05(c *C) {
 	c.Check(gcs[0].IsValidThai, Equals, true)
 }
 
-// XXX- check error handling
+func (s *MySuite) TestClusterWiki06(c *C) {
+	var gcp GStackClusterParser
+	gcp.Initialize()
+
+	input := "ยโธา"
+
+	gs := ParseGraphemeStacks(input)
+	gcs := gcp.ParseGraphemeStacks(gs)
+
+	// It doesn't crash
+	c.Assert(len(gcs), Equals, 3)
+	/*
+		fmt.Printf("0: %s\n", gcs[0].Text)
+		fmt.Printf("1: %s\n", gcs[1].Text)
+		fmt.Printf("2: %s\n", gcs[2].Text)
+	*/
+	c.Check(gcs[0].IsValidThai, Equals, true)  // yo yak
+	c.Check(gcs[1].IsValidThai, Equals, false) // sara oo
+	c.Check(gcs[2].IsValidThai, Equals, true)  // tha
+}
 
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
