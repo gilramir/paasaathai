@@ -58,6 +58,8 @@ type GStackCluster struct {
 	// only consonants, or only vowels.
 	Tail []GraphemeStack
 
+	InvalidThai GraphemeStack
+
 	// The name of the rule that created this cluster.
 	MatchingRule string
 }
@@ -469,18 +471,28 @@ next_input:
 			}
 		}
 
-		// No success.
-		report := "GraphemeStacks:\n"
-		for zi := 0; zi < len(input); zi++ {
-			report += fmt.Sprintf("%d: %s = %s\n", zi, input[zi].Text, input[zi].Repr())
-		}
-		report += "\nClusters:\n"
-		for zi, zc := range clusters {
-			report += fmt.Sprintf("%d: %s = %s\n", zi, zc.Text, zc.Repr())
-		}
+		// No success. Emit one stack as erroneous.
 
-		msg := fmt.Sprintf("Can't handle gstack at pos %d:\n%s", i, report)
-		panic(msg)
+		c = makeCluster(input[i : i+1])
+		c.InvalidThai = input[i]
+		c.IsValidThai = false
+		clusters = append(clusters, c)
+		i++
+		continue
+		/*
+
+			report := "GraphemeStacks:\n"
+			for zi := 0; zi < len(input); zi++ {
+				report += fmt.Sprintf("%d: %s = %s\n", zi, input[zi].Text, input[zi].Repr())
+			}
+			report += "\nClusters:\n"
+			for zi, zc := range clusters {
+				report += fmt.Sprintf("%d: %s = %s\n", zi, zc.Text, zc.Repr())
+			}
+
+			msg := fmt.Sprintf("Can't handle gstack at pos %d:\n%s", i, report)
+			panic(msg)
+		*/
 	}
 
 	return clusters

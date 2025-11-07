@@ -815,7 +815,7 @@ func (s *MySuite) TestClusterWiki04(c *C) {
 	c.Check(gcs[0].IsValidThai, Equals, false)
 }
 
-// Line 49529
+// Line 79691
 // LU LAKKHANGYAO
 func (s *MySuite) TestClusterWiki05(c *C) {
 	var gcp GStackClusterParser
@@ -830,6 +830,8 @@ func (s *MySuite) TestClusterWiki05(c *C) {
 	c.Assert(len(gcs), Equals, 1)
 	c.Check(gcs[0].IsValidThai, Equals, true)
 }
+
+// XXX- check error handling
 
 // TODO โต๊ระ in data/best/encyclopedia.zip(encyclopedia/encyclopedia_00061.txt) line 445 item 5
 
